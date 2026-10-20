@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#282828">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent=".075" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent=".055" />
+
+        <ImageView
+            android:id="@+id/imgBanner"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/default_landscape"
+            app:layout_constraintDimensionRatio="16:9"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".7" />
+
+
+        <View
+            android:id="@+id/horizontal_gradient"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/banner_gradient"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@id/guideline_start"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".65" />
+
+        <View
+            android:id="@+id/vertical_gradient"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/gradient_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_default="percent"
+            app:layout_constraintHeight_percent=".7"
+            app:layout_constraintStart_toStartOf="@id/guideline_start"
+            />
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text=""
+            android:textColor="@color/color_white"
+            android:textSize="26sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@id/guideline_top"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".42" />
+
+        <TextView
+            android:id="@+id/subtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="sans-serif-black"
+            android:text=""
+            android:textColor="@color/color_white"
+            android:textSize="13sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".42" />
+
+        <TextView
+            android:id="@+id/description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:ellipsize="end"
+            android:lineSpacingMultiplier="1.2"
+            android:maxLines="3"
+            android:text=""
+            android:textColor="@color/color_white"
+            android:textSize="13sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@id/subtitle"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".42" />
+
+        <ProgressBar
+            android:id="@+id/seekViewProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:visibility="gone"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_vertical"
+            android:progressTint="@color/app_red"
+            android:progressBackgroundTint="@color/color_grey"
+            android:background="@drawable/btn_selector"
+            android:drawableLeft="@drawable/baseline_play_circle_filled_24"
+            android:drawablePadding="8dp"
+            android:padding="8dp"
+            android:textColor="@color/color_white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/description"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".3"
+            />
+
+
+        <TextView
+            android:id="@+id/show_more"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/description"
+            app:layout_constraintBottom_toBottomOf="@+id/description"
+            android:nextFocusDown="@id/play"
+            android:textColor="@color/color_white"
+            android:focusable="true"
+            android:clickable="true"
+            android:text="Show more"
+            android:textSize="13sp"
+            android:padding="1dp"
+            android:background="@drawable/btn_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/play"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_vertical"
+            android:background="@drawable/btn_selector"
+            android:drawableLeft="@drawable/baseline_play_circle_filled_24"
+            android:drawablePadding="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:focusedByDefault="true"
+            android:nextFocusDown="@id/add_like"
+            android:padding="8dp"
+            android:text="Play"
+            android:textColor="@color/color_white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/seekViewProgressBar"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".3" />
+
+        <TextView
+            android:id="@+id/add_like"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:background="@drawable/btn_selector"
+            android:drawableLeft="@drawable/outline_thumb_up_24"
+            android:drawablePadding="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:focusedByDefault="true"
+            android:nextFocusDown="@id/add_dislike"
+            android:padding="8dp"
+            android:text="I Like this"
+            android:textColor="@color/color_white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/play"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".3" />
+        
+        <TextView
+            android:id="@+id/add_dislike"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:background="@drawable/btn_selector"
+            android:drawableLeft="@drawable/outline_thumb_down_24"
+            android:drawablePadding="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:focusedByDefault="true"
+            android:nextFocusDown="@id/add_to_mylist"
+            android:padding="8dp"
+            android:text="Not for me"
+            android:textColor="@color/color_white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/add_like"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".3" />
+
+        <TextView
+            android:id="@+id/add_to_mylist"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/btn_selector"
+            android:drawableLeft="@drawable/baseline_add_24"
+            android:drawablePadding="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:focusedByDefault="true"
+            android:padding="8dp"
+            android:text="Add to My List"
+            android:textColor="@color/color_white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/add_dislike"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent=".3" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:visibility="gone"
+            android:gravity="center"
+            android:backgroundTint="@color/app_red"
+            android:progressBackgroundTint="@color/app_red"
+            android:progressTint="@color/app_red"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent=".3"
+            />
+
+<!--        <androidx.fragment.app.FragmentContainerView-->
+<!--            android:id="@+id/cast_fragment"-->
+<!--            android:name="com.tutorial.tvapp.ListFragment"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="20dp"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/add_to_mylist" />-->
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</layout>

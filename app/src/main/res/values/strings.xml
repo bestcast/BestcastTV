@@ -1,0 +1,79 @@
+<resources>
+    <string name="app_name">Bestcast</string>
+    <string name="browse_title">Bestcast studios</string>
+    <string name="related_movies">Related Videos</string>
+    <string name="grid_view">Grid View</string>
+    <string name="error_fragment">Error Fragment</string>
+    <string name="personal_settings">Personal Settings</string>
+    <string name="watch_trailer_1">Watch trailer</string>
+    <string name="watch_trailer_2">FREE</string>
+    <string name="rent_1">Rent By Day</string>
+    <string name="rent_2">From $1.99</string>
+    <string name="buy_1">Buy and Own</string>
+    <string name="buy_2">AT $9.99</string>
+    <string name="movie">Movie</string>
+
+    <string name="shared_name">Bestcast</string>
+    <string name="shared_userName">username</string>
+    <string name="shared_password">password</string>
+    <string name="shared_login_status">status</string>
+    <string name="shared_userID">userID</string>
+    <string name="shared_profileName">profileName</string>
+    <string name="shared_userType">userType</string>
+    <string name="shared_mobile">mobile</string>
+    <string name="shared_email">email</string>
+    <string name="shared_active">active</string>
+    <string name="shared_dateCreated">dateCreated</string>
+
+    <string name="loggedStatus">loggedStatus</string>
+    <string name="id">id</string>
+    <string name="qrcode">qrcode</string>
+    <string name="email">email</string>
+    <string name="phone">phone</string>
+    <string name="name">name</string>
+    <string name="firstname">firstname</string>
+    <string name="lastname">lastname</string>
+    <string name="dob">dob</string>
+    <string name="gender">gender</string>
+    <string name="plan">plan</string>
+    <string name="plan_expiry">plan_expiry</string>
+    <string name="photo">photo</string>
+    <string name="otp">otp</string>
+    <string name="tvcode">tvcode</string>
+    <string name="referal_code">referal_code</string>
+    <string name="credits_used">credits_used</string>
+    <string name="refferer">refferer</string>
+    <string name="token">token</string>
+    <string name="accountCreatedStatus">accountCreatedStatus</string>
+
+    <string name="profileID">profileID</string>
+    <string name="profileName">profileName</string>
+    <string name="profilePictureID">profilePictureID</string>
+    <string name="profilePictureTitle">profilePictureTitle</string>
+    <string name="profilePicture">profilePicture</string>
+    <string name="isChild">isChild</string>
+
+    <string name="mobileDataUsage">mobileDataUsage</string>
+    <string name="enabelNotification">enabelNotification</string>
+    <string name="downloadQuality">downloadQuality</string>
+    <string name="downloadDataOption">downloadDataOption</string>
+
+    <string name="check_network_connection">Please check your network connection.</string>
+
+    <!-- Error messages -->
+    <string name="error_fragment_message">An error occurred</string>
+    <string name="dismiss_error">Dismiss</string>
+    <string name="title_activity_main_page">MainPageActivity</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

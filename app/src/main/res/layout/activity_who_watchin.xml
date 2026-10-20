@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    tools:context=".who_watching.WhoWatchingActivity">
+
+    <LinearLayout
+        android:id="@+id/whoWhatchListLayout"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="16dp"
+        android:layout_gravity="center"
+        android:drawableLeft="@drawable/baseline_account_circle_24"
+        android:drawablePadding="16dp"
+        android:textSize="30sp"
+        android:gravity="center_vertical"
+        android:text="Who watching"
+        android:textColor="@color/color_white" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/whowatchingRecylclerview"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        tools:itemCount="20"
+        tools:listitem="@layout/who_watching_item" />
+    </LinearLayout>
+</FrameLayout>

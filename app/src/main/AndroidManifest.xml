@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true" />
+
+    <application
+        android:name=".BestcastApp"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="n"
+        android:allowBackup="true"
+        android:banner="@drawable/banner_bestcast"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@drawable/icon_bestcast"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BestcastTV">
+        <activity
+            android:name=".otp.OTPActivity"
+            android:windowSoftInputMode="stateVisible|adjustResize"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterAlertScreen"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".move_details_page.MovieDetailsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".main_page.MainPageActivity"
+            android:exported="false"
+            android:label="@string/title_activity_main_page"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BestcastTV.NoActionBar" />
+        <activity
+            android:name=".who_watching.WhoWatchingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PlanExpiredScreen"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateVisible|adjustResize"/>
+        <activity
+            android:name=".SplashscreenActivity"
+            android:exported="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:banner="@drawable/banner_bestcast"
+            android:exported="true"
+            android:icon="@drawable/icon_bestcast"
+            android:label="@string/app_name"
+            android:logo="@drawable/icon_bestcast"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".DetailsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PlaybackActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BrowseErrorActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>

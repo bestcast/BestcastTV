@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="20dp"
+        android:background="@drawable/dialog_background_design"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/selector_menu"
+            android:drawablePadding="16dp"
+            android:gravity="center"
+            android:text="Singing out of the this app means you'll also sign out of \nall other Bestcast apps on this device."
+            android:textColor="@color/text_selector_white_grey" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:orientation="horizontal">
+
+
+            <TextView
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selector_text_background"
+                android:drawablePadding="16dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:text="Cancel"
+                android:layout_marginRight="20dp"
+                android:textColor="@color/text_selector_white_grey" />
+            <TextView
+                android:id="@+id/btn_signout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/selector_text_background"
+                android:drawablePadding="16dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:text="Sing out"
+                android:textColor="@color/text_selector_white_grey" />
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
