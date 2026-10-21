@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -47,6 +48,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
     private TextView txtSeriesSeasonsCount;
     private TextView txtSeriesDescription;
     private Button btnPlayResume;
+    private View btnBack;
 
     private RecyclerView recyclerSeasons;
     private RecyclerView recyclerEpisodes;
@@ -82,6 +84,20 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         sharedPreferences = getSharedPreferences(getString(R.string.shared_name), Context.MODE_PRIVATE);
         token = sharedPreferences.getString(getString(R.string.token), "");
         profileID = sharedPreferences.getString(getString(R.string.profileID), "");
+
+        btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> onBackPressed());
+            btnBack.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                        onBackPressed();
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
 
         imgSeriesBanner = findViewById(R.id.img_series_banner);
         txtSeriesTitle = findViewById(R.id.txt_series_title);

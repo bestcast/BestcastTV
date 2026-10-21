@@ -27,23 +27,57 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_percent=".75" />
 
+    <!-- Back Button -->
+    <LinearLayout
+        android:id="@+id/btn_back"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/back_button_selector"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:gravity="center_vertical"
+        android:nextFocusDown="@id/btn_play_resume"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Back"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll_series_details"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:clipToPadding="false"
         android:descendantFocusability="afterDescendants"
         android:fillViewport="true"
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:paddingStart="40dp"
-        android:paddingTop="30dp"
+        android:paddingTop="12dp"
         android:paddingEnd="20dp"
         android:paddingBottom="40dp"
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_back"
         app:layout_constraintWidth_percent=".62">
 
         <LinearLayout
@@ -139,6 +173,7 @@
                 android:drawablePadding="8dp"
                 android:focusable="true"
                 android:gravity="center"
+                android:nextFocusUp="@id/btn_back"
                 android:nextFocusDown="@id/recycler_seasons"
                 android:text="Play"
                 android:textColor="@android:color/black"
