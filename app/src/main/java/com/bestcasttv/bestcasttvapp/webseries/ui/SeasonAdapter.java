@@ -59,6 +59,7 @@ public class SeasonAdapter extends RecyclerView.Adapter<SeasonAdapter.SeasonView
 
         holder.txtSeason.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
+                v.animate().scaleX(1.06f).scaleY(1.06f).translationZ(4f).setDuration(150).start();
                 int newPos = holder.getBindingAdapterPosition();
                 if (newPos != RecyclerView.NO_POSITION && newPos != selectedPosition) {
                     int previous = selectedPosition;
@@ -69,6 +70,8 @@ public class SeasonAdapter extends RecyclerView.Adapter<SeasonAdapter.SeasonView
                         listener.onSeasonClick(seasons.get(newPos), newPos);
                     }
                 }
+            } else {
+                v.animate().scaleX(1.0f).scaleY(1.0f).translationZ(0f).setDuration(150).start();
             }
         });
 

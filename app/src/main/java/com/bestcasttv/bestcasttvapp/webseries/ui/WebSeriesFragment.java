@@ -90,6 +90,7 @@ public class WebSeriesFragment extends Fragment {
             if (series == null || series.getId() == null) return;
             Intent intent = new Intent(getContext(), WebSeriesDetailsActivity.class);
             intent.putExtra("webseries_id", series.getId());
+            intent.putExtra("webseries_data", series);
             startActivity(intent);
         });
 

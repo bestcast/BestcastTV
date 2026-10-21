@@ -9,6 +9,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,6 +28,7 @@ import com.bestcasttv.bestcasttvapp.webseries.model.ResumeModel;
 import com.bestcasttv.bestcasttvapp.webseries.model.SeasonModel;
 import com.bestcasttv.bestcasttvapp.webseries.model.WebSeriesModel;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -42,6 +44,7 @@ import retrofit2.Response;
 public class WebSeriesDetailsActivity extends FragmentActivity {
 
     private ImageView imgSeriesBanner;
+    private ProgressBar progressLoadingDetails;
     private TextView txtSeriesTitle;
     private TextView txtSeriesYear;
     private TextView txtSeriesCertificate;
@@ -49,6 +52,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
     private TextView txtSeriesDescription;
     private Button btnPlayResume;
     private View btnBack;
+    private TextView txtEpisodesEmpty;
 
     private RecyclerView recyclerSeasons;
     private RecyclerView recyclerEpisodes;
@@ -69,6 +73,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
     private List<SeasonModel> seasonList = new ArrayList<>();
     private SeasonModel selectedSeason;
     private int selectedSeasonIndex = 0;
+    private String mainBannerUrl = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -97,15 +102,25 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
                 }
                 return false;
             });
+            btnBack.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    v.animate().scaleX(1.05f).scaleY(1.05f).translationZ(6f).setDuration(150).start();
+                    restoreMainBanner();
+                } else {
+                    v.animate().scaleX(1.0f).scaleY(1.0f).translationZ(0f).setDuration(150).start();
+                }
+            });
         }
 
         imgSeriesBanner = findViewById(R.id.img_series_banner);
+        progressLoadingDetails = findViewById(R.id.progress_loading_details);
         txtSeriesTitle = findViewById(R.id.txt_series_title);
         txtSeriesYear = findViewById(R.id.txt_series_year);
         txtSeriesCertificate = findViewById(R.id.txt_series_certificate);
         txtSeriesSeasonsCount = findViewById(R.id.txt_series_seasons_count);
         txtSeriesDescription = findViewById(R.id.txt_series_description);
         btnPlayResume = findViewById(R.id.btn_play_resume);
+        txtEpisodesEmpty = findViewById(R.id.txt_episodes_empty);
 
         recyclerSeasons = findViewById(R.id.recycler_seasons);
         recyclerEpisodes = findViewById(R.id.recycler_episodes);
@@ -116,6 +131,23 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         recyclerEpisodes.setNestedScrollingEnabled(false);
 
         btnPlayResume.setOnClickListener(v -> onPlayResumeClicked());
+        btnPlayResume.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                v.animate().scaleX(1.02f).scaleY(1.02f).translationZ(6f).setDuration(150).start();
+                restoreMainBanner();
+            } else {
+                v.animate().scaleX(1.0f).scaleY(1.0f).translationZ(0f).setDuration(150).start();
+            }
+        });
+
+        // Optimistic UI: Pre-render immediately if series data was passed via Intent
+        WebSeriesModel initialData = (WebSeriesModel) getIntent().getSerializableExtra("webseries_data");
+        if (initialData != null) {
+            webSeriesData = initialData;
+            seasonList = initialData.getSeasons() != null ? initialData.getSeasons() : new ArrayList<>();
+            resumeData = initialData.getResume();
+            updateUIWithData();
+        }
 
         loadWebSeriesDetails();
     }
@@ -126,8 +158,24 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         loadWebSeriesDetails();
     }
 
+    private void restoreMainBanner() {
+        if (mainBannerUrl != null && !mainBannerUrl.isEmpty() && imgSeriesBanner != null) {
+            Glide.with(this)
+                    .load(mainBannerUrl)
+                    .transition(DrawableTransitionOptions.withCrossFade(250))
+                    .placeholder(imgSeriesBanner.getDrawable())
+                    .error(R.drawable.default_landscape)
+                    .into(imgSeriesBanner);
+        }
+    }
+
     private void loadWebSeriesDetails() {
-        if (loadingDialog != null && !isFinishing()) loadingDialog.show();
+        boolean hasDataAlready = (webSeriesData != null);
+        if (!hasDataAlready) {
+            if (loadingDialog != null && !isFinishing()) loadingDialog.show();
+        } else {
+            if (progressLoadingDetails != null) progressLoadingDetails.setVisibility(View.VISIBLE);
+        }
 
         ApiService apiService = RetrofitClient.getApiService(token);
         Call<JsonObject> call = apiService.getWebseriesWatchdetail(webSeriesId, profileID);
@@ -136,6 +184,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
                 if (loadingDialog != null && !isFinishing()) loadingDialog.cancel();
+                if (progressLoadingDetails != null) progressLoadingDetails.setVisibility(View.GONE);
 
                 if (response.isSuccessful() && response.body() != null) {
                     try {
@@ -154,15 +203,16 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
                         Log.e("WebSeriesDetails", "Parsing error", e);
                     }
                 } else {
-                    if (appUtils != null) appUtils.showToast("Failed to load web series details");
+                    if (appUtils != null && !hasDataAlready) appUtils.showToast("Failed to load web series details");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (loadingDialog != null && !isFinishing()) loadingDialog.cancel();
+                if (progressLoadingDetails != null) progressLoadingDetails.setVisibility(View.GONE);
                 Log.e("WebSeriesDetails", "Network error", t);
-                if (appUtils != null) appUtils.showToast("Network error.");
+                if (appUtils != null && !hasDataAlready) appUtils.showToast("Network error.");
             }
         });
     }
@@ -214,24 +264,17 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         if (bannerUrl != null && !bannerUrl.startsWith("http")) {
             bannerUrl = RetrofitClient.BASE_URL + "/" + bannerUrl;
         }
+        mainBannerUrl = bannerUrl;
 
         Glide.with(this)
                 .load(bannerUrl)
+                .transition(DrawableTransitionOptions.withCrossFade(250))
                 .placeholder(R.drawable.default_landscape)
                 .error(R.drawable.default_landscape)
                 .into(imgSeriesBanner);
 
-        if (resumeData != null && resumeData.getEpisodeId() != null && !resumeData.getEpisodeId().isEmpty()) {
-            String sTitle = resumeData.getSeasonTitle() != null ? resumeData.getSeasonTitle() : "";
-            String eTitle = resumeData.getEpisodeTitle() != null ? resumeData.getEpisodeTitle() : "";
-            if (sTitle.toLowerCase().startsWith("season")) {
-                btnPlayResume.setText("Resume " + sTitle + " - " + eTitle);
-            } else {
-                btnPlayResume.setText("Resume Season " + sTitle + " " + eTitle);
-            }
-        } else {
-            btnPlayResume.setText("Play S1 E1");
-        }
+        // Main action button always displays "Play"
+        btnPlayResume.setText("Play");
 
         if (seasonList != null && !seasonList.isEmpty()) {
             if (selectedSeasonIndex < 0 || selectedSeasonIndex >= seasonList.size()) {
@@ -246,11 +289,19 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
                 seasonAdapter = new SeasonAdapter(seasonList, (season, position) -> {
                     selectedSeasonIndex = position;
                     selectedSeason = season;
+                    restoreMainBanner();
                     if (episodeAdapter != null) {
                         List<EpisodeModel> eps = (season != null && season.getEpisodes() != null)
                                 ? season.getEpisodes()
                                 : new ArrayList<>();
                         episodeAdapter.updateEpisodes(eps);
+                        if (eps.isEmpty()) {
+                            if (txtEpisodesEmpty != null) txtEpisodesEmpty.setVisibility(View.VISIBLE);
+                            recyclerEpisodes.setVisibility(View.GONE);
+                        } else {
+                            if (txtEpisodesEmpty != null) txtEpisodesEmpty.setVisibility(View.GONE);
+                            recyclerEpisodes.setVisibility(View.VISIBLE);
+                        }
                     }
                 });
                 seasonAdapter.setSelectedPosition(selectedSeasonIndex);
@@ -260,11 +311,40 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
             }
 
             if (episodeAdapter == null) {
-                episodeAdapter = new EpisodeAdapter(currentEpisodes, (episode, position) -> launchPlayer(episode));
+                episodeAdapter = new EpisodeAdapter(
+                        currentEpisodes,
+                        (episode, position) -> launchPlayer(episode),
+                        (episode, hasFocus) -> {
+                            if (hasFocus && episode != null) {
+                                String epBanner = episode.getImage();
+                                if (epBanner == null || epBanner.isEmpty()) epBanner = episode.getThumbnail();
+                                if (epBanner != null && !epBanner.isEmpty()) {
+                                    if (!epBanner.startsWith("http")) epBanner = RetrofitClient.BASE_URL + "/" + epBanner;
+                                    Glide.with(WebSeriesDetailsActivity.this)
+                                            .load(epBanner)
+                                            .transition(DrawableTransitionOptions.withCrossFade(250))
+                                            .placeholder(imgSeriesBanner.getDrawable())
+                                            .error(R.drawable.default_landscape)
+                                            .into(imgSeriesBanner);
+                                }
+                            }
+                        }
+                );
                 recyclerEpisodes.setAdapter(episodeAdapter);
             } else {
                 episodeAdapter.updateEpisodes(currentEpisodes);
             }
+
+            if (currentEpisodes.isEmpty()) {
+                if (txtEpisodesEmpty != null) txtEpisodesEmpty.setVisibility(View.VISIBLE);
+                recyclerEpisodes.setVisibility(View.GONE);
+            } else {
+                if (txtEpisodesEmpty != null) txtEpisodesEmpty.setVisibility(View.GONE);
+                recyclerEpisodes.setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (txtEpisodesEmpty != null) txtEpisodesEmpty.setVisibility(View.VISIBLE);
+            recyclerEpisodes.setVisibility(View.GONE);
         }
     }
 
