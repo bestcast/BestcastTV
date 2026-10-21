@@ -4,11 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,6 +27,8 @@ import com.bestcasttv.bestcasttvapp.app_utils.LoadingDialog;
 import com.bestcasttv.bestcasttvapp.webseries.model.WebSeriesBlockModel;
 import com.bestcasttv.bestcasttvapp.webseries.model.WebSeriesModel;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -40,10 +45,15 @@ import retrofit2.Response;
 
 public class WebSeriesFragment extends Fragment {
 
+    // In-memory cache for optimistic instant loading
+    private static List<WebSeriesBlockModel> sCachedBlockList = null;
+    private static WebSeriesModel sCachedSelectedSeries = null;
+
     private TextView txtTitle;
     private TextView txtSubTitle;
     private TextView txtDescription;
     private ImageView imgBanner;
+    private ProgressBar progressLoading;
 
     private WebSeriesListRowFragment listFragment;
     private AppUtils appUtils;
@@ -53,11 +63,16 @@ public class WebSeriesFragment extends Fragment {
     private String token = "";
     private String profileID = "";
 
+    // Debounce banner Glide image loading to prevent dropped frames during fast D-pad navigation
+    private final Handler bannerHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingBannerRunnable;
+    private String currentLoadedBannerUrl = "";
+
     public WebSeriesFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        return inflater.inflate(R.layout.fragment_web_series, container, false);
     }
 
     @Override
@@ -77,8 +92,7 @@ public class WebSeriesFragment extends Fragment {
         txtSubTitle = view.findViewById(R.id.subtitle);
         txtDescription = view.findViewById(R.id.description);
         imgBanner = view.findViewById(R.id.img_banner);
-
-        txtTitle.setText("Web Series");
+        progressLoading = view.findViewById(R.id.progress_loading_webseries);
 
         listFragment = new WebSeriesListRowFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
@@ -94,11 +108,41 @@ public class WebSeriesFragment extends Fragment {
             startActivity(intent);
         });
 
+        // Optimistic UI: Immediately render from cache if available (0ms delay)
+        if (sCachedBlockList != null && !sCachedBlockList.isEmpty()) {
+            listFragment.bindData(sCachedBlockList);
+            if (sCachedSelectedSeries != null) {
+                updateBannerImmediate(sCachedSelectedSeries);
+            } else {
+                WebSeriesModel first = findFirstSeries(sCachedBlockList);
+                if (first != null) updateBannerImmediate(first);
+            }
+        }
+
         loadWebSeriesBlocks();
     }
 
+    private WebSeriesModel findFirstSeries(List<WebSeriesBlockModel> blocks) {
+        if (blocks == null) return null;
+        for (WebSeriesBlockModel block : blocks) {
+            if (block != null && block.getWebseriesList() != null && !block.getWebseriesList().isEmpty()) {
+                WebSeriesModel series = block.getWebseriesList().get(0);
+                if (series != null) return series;
+            }
+        }
+        return null;
+    }
+
     private void loadWebSeriesBlocks() {
-        if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.show();
+        boolean hasCache = (sCachedBlockList != null && !sCachedBlockList.isEmpty());
+
+        if (!hasCache) {
+            if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) {
+                loadingDialog.show();
+            }
+        } else {
+            if (progressLoading != null) progressLoading.setVisibility(View.VISIBLE);
+        }
 
         ApiService apiService = RetrofitClient.getApiService(token);
         Call<JsonObject> call = apiService.getWebseriesBlockslist("1", profileID, "0", "", "");
@@ -106,7 +150,10 @@ public class WebSeriesFragment extends Fragment {
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.cancel();
+                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) {
+                    loadingDialog.cancel();
+                }
+                if (progressLoading != null) progressLoading.setVisibility(View.GONE);
 
                 if (response.isSuccessful() && response.body() != null) {
                     try {
@@ -119,18 +166,15 @@ public class WebSeriesFragment extends Fragment {
                             List<WebSeriesBlockModel> blockList = gson.fromJson(dataArray.toString(), listType);
 
                             if (blockList != null && !blockList.isEmpty()) {
+                                sCachedBlockList = blockList;
                                 if (listFragment != null) {
                                     listFragment.bindData(blockList);
                                 }
-                                WebSeriesModel initialSeries = null;
-                                for (WebSeriesBlockModel block : blockList) {
-                                    if (block != null && block.getWebseriesList() != null && !block.getWebseriesList().isEmpty()) {
-                                        initialSeries = block.getWebseriesList().get(0);
-                                        if (initialSeries != null) break;
+                                if (sCachedSelectedSeries == null) {
+                                    WebSeriesModel initialSeries = findFirstSeries(blockList);
+                                    if (initialSeries != null) {
+                                        updateBannerImmediate(initialSeries);
                                     }
-                                }
-                                if (initialSeries != null) {
-                                    updateBanner(initialSeries);
                                 }
                             }
                         }
@@ -138,37 +182,78 @@ public class WebSeriesFragment extends Fragment {
                         Log.e("WebSeriesFragment", "Error parsing blocks", e);
                     }
                 } else {
-                    if (appUtils != null) appUtils.showToast("Failed to load Web Series");
+                    if (appUtils != null && !hasCache) appUtils.showToast("Failed to load Web Series");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.cancel();
+                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) {
+                    loadingDialog.cancel();
+                }
+                if (progressLoading != null) progressLoading.setVisibility(View.GONE);
                 Log.e("WebSeriesFragment", "Network error", t);
-                if (appUtils != null) appUtils.showToast("Network error.");
+                if (appUtils != null && !hasCache) appUtils.showToast("Network error.");
             }
         });
     }
 
+    /**
+     * Updates text immediately for 0ms visual feedback, then debounces image loading
+     * by 120ms to keep scrolling buttery-smooth at 60fps on Android TV.
+     */
     private void updateBanner(WebSeriesModel series) {
         if (series == null) return;
+        sCachedSelectedSeries = series;
+
+        updateTextMetadata(series);
+
+        // Debounce Glide network/disk image request
+        if (pendingBannerRunnable != null) {
+            bannerHandler.removeCallbacks(pendingBannerRunnable);
+        }
+        pendingBannerRunnable = () -> loadBannerImage(series);
+        bannerHandler.postDelayed(pendingBannerRunnable, 120);
+    }
+
+    private void updateBannerImmediate(WebSeriesModel series) {
+        if (series == null) return;
+        sCachedSelectedSeries = series;
+        updateTextMetadata(series);
+        loadBannerImage(series);
+    }
+
+    private void updateTextMetadata(WebSeriesModel series) {
         if (getActivity() == null || !isAdded()) return;
 
-        if (txtTitle != null) txtTitle.setText(series.getTitle());
+        if (txtTitle != null) {
+            String title = series.getTitle();
+            txtTitle.setText(title != null ? title : "Web Series");
+        }
 
-        String certificate = series.getCertificate();
         if (txtSubTitle != null) {
-            txtSubTitle.setText(certificate != null ? certificate : "");
+            StringBuilder subtitle = new StringBuilder();
+            if (series.getCertificate() != null && !series.getCertificate().trim().isEmpty()) {
+                subtitle.append(series.getCertificate().trim());
+            }
+            if (series.getYear() != null && !series.getYear().trim().isEmpty()) {
+                if (subtitle.length() > 0) subtitle.append(" • ");
+                subtitle.append(series.getYear().trim());
+            }
+            txtSubTitle.setText(subtitle.toString());
         }
 
-        String content = series.getContent();
-        if (content != null) {
-            content = content.replaceAll("<[^>]*>", "");
-        }
         if (txtDescription != null) {
+            String content = series.getContent();
+            if (content != null) {
+                content = content.replaceAll("<[^>]*>", "").trim();
+            }
             txtDescription.setText(content != null ? content : "");
         }
+    }
+
+    private void loadBannerImage(WebSeriesModel series) {
+        if (getActivity() == null || !isAdded() || imgBanner == null || getContext() == null) return;
 
         String bannerUrl = series.getImage();
         if (bannerUrl == null || bannerUrl.isEmpty()) {
@@ -179,12 +264,29 @@ public class WebSeriesFragment extends Fragment {
             bannerUrl = RetrofitClient.BASE_URL + "/" + bannerUrl;
         }
 
-        if (imgBanner != null && getContext() != null) {
-            Glide.with(getContext())
-                    .load(bannerUrl)
-                    .placeholder(R.drawable.default_landscape)
-                    .error(R.drawable.default_landscape)
-                    .into(imgBanner);
+        if (bannerUrl == null || bannerUrl.isEmpty() || bannerUrl.equals(currentLoadedBannerUrl)) {
+            return;
+        }
+
+        currentLoadedBannerUrl = bannerUrl;
+
+        Glide.with(this)
+                .load(bannerUrl)
+                .transition(DrawableTransitionOptions.withCrossFade(250))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(imgBanner.getDrawable())
+                .error(R.drawable.default_landscape)
+                .into(imgBanner);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (pendingBannerRunnable != null) {
+            bannerHandler.removeCallbacks(pendingBannerRunnable);
+        }
+        if (loadingDialog != null) {
+            loadingDialog.cancel();
         }
     }
 }
