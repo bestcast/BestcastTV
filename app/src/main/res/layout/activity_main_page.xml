@@ -104,6 +104,18 @@
                         android:textColor="@color/text_selector_white_grey" />
 
                     <TextView
+                        android:id="@+id/btn_webseries"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:background="@drawable/selector_menu"
+                        android:drawableLeft="@drawable/ic_tv"
+                        android:drawablePadding="16dp"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:text="Web Series"
+                        android:textColor="@color/text_selector_white_grey" />
+
+                    <TextView
                         android:id="@+id/btn_category"
                         android:layout_width="match_parent"
                         android:layout_height="45dp"

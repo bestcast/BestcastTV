@@ -80,6 +80,16 @@
         <activity
             android:name=".BrowseErrorActivity"
             android:exported="false" />
+        <activity
+            android:name=".webseries.ui.WebSeriesDetailsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BestcastTV.NoActionBar" />
+        <activity
+            android:name=".webseries.ui.WebSeriesPlaybackActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BestcastTV.NoActionBar" />
     </application>
 
 </manifest>

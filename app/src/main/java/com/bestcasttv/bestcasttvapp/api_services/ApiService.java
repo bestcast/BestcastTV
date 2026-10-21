@@ -8,12 +8,14 @@ import com.bestcasttv.bestcasttvapp.otp.OTPLoginRequestModel;
 import com.bestcasttv.bestcasttvapp.otp.OTPRequest;
 import com.bestcasttv.bestcasttvapp.playbackmodels.WatchedModel;
 import com.bestcasttv.bestcasttvapp.playbackmodels.WatchingModel;
+import com.bestcasttv.bestcasttvapp.webseries.model.UserEpisodeRequestModel;
 import com.google.gson.JsonObject;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.Url;
 
@@ -62,7 +64,6 @@ public interface ApiService {
             @Query("genre_id") String genreId
     );
 
-
     @GET("/api/usermovieslist")
     Call<JsonObject> getUsermovieslist(
             @Query("profile_id") String profileId,
@@ -80,7 +81,6 @@ public interface ApiService {
             @Query("search") String searchText,
             @Query("profile_id") String profileId
     );
-
 
     @GET("/api/genrelist")
     Call<JsonObject> getGenrelist();
@@ -112,5 +112,44 @@ public interface ApiService {
             @Body WatchedModel watchedModel
     );
 
+    /* Web Series APIs */
+    @GET("/api/webseriesblockslist")
+    Call<JsonObject> getWebseriesBlockslist(
+            @Query("page_id") String pageId,
+            @Query("profile_id") String profileId,
+            @Query("child") String child,
+            @Query("genre_id") String genreId,
+            @Query("language_id") String languageId
+    );
 
+    @GET("/api/seasonepisodebannerlist/{webseries_id}")
+    Call<JsonObject> getSeasonEpisodeBannerlist(
+            @Path("webseries_id") String webseriesId,
+            @Query("profile_id") String profileId
+    );
+
+    @GET("/api/webserieswatchdetail/{webseries_id}")
+    Call<JsonObject> getWebseriesWatchdetail(
+            @Path("webseries_id") String webseriesId,
+            @Query("profile_id") String profileId
+    );
+
+    @GET("/api/getwebseriesdetail/{id}")
+    Call<JsonObject> getWebseriesDetail(
+            @Path("id") String id,
+            @Query("profile_id") String profileId
+    );
+
+    @GET("/api/getuserepisode/{episode_id}")
+    Call<JsonObject> getUserEpisode(
+            @Path("episode_id") String episodeId,
+            @Query("profile_id") String profileId
+    );
+
+    @POST("/api/setuserepisode/{episode_id}")
+    Call<JsonObject> setUserEpisode(
+            @Path("episode_id") String episodeId,
+            @Query("profile_id") String profileId,
+            @Body UserEpisodeRequestModel body
+    );
 }

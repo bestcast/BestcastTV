@@ -61,6 +61,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     TextView btnSearch;
     TextView btnHome;
     TextView btnMovie;
+    TextView btnWebseries;
     TextView btnCategory;
     TextView btnMyist;
     TextView signOutBtTextView;
@@ -100,6 +101,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         btnSearch = findViewById(R.id.btn_search);
         btnHome = findViewById(R.id.btn_home);
         btnMovie = findViewById(R.id.btn_movies);
+        btnWebseries = findViewById(R.id.btn_webseries);
         btnCategory = findViewById(R.id.btn_category);
         btnMyist = findViewById(R.id.btn_mylist);
         categoryListView = findViewById(R.id.categoryListView);
@@ -109,9 +111,19 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         btnSearch.setOnKeyListener(this);
         btnHome.setOnKeyListener(this);
         btnMovie.setOnKeyListener(this);
+        if (btnWebseries != null) btnWebseries.setOnKeyListener(this);
         btnCategory.setOnKeyListener(this);
         btnMyist.setOnKeyListener(this);
         signOutBtTextView.setOnKeyListener(this);
+
+        View.OnClickListener menuClickListener = this::handleMenuClick;
+        btnSearch.setOnClickListener(menuClickListener);
+        btnHome.setOnClickListener(menuClickListener);
+        btnMovie.setOnClickListener(menuClickListener);
+        if (btnWebseries != null) btnWebseries.setOnClickListener(menuClickListener);
+        btnCategory.setOnClickListener(menuClickListener);
+        btnMyist.setOnClickListener(menuClickListener);
+        signOutBtTextView.setOnClickListener(menuClickListener);
 
 
         allCategoryItems = new ArrayList<>();
@@ -154,6 +166,59 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
 
     }
 
+    private void handleMenuClick(View view) {
+        if (lastSelectedMenu != null) {
+            lastSelectedMenu.setActivated(false);
+        }
+        view.setActivated(true);
+        lastSelectedMenu = view;
+
+        int itemId = view.getId();
+
+        if (itemId == R.id.btn_category) {
+            if (!CATEGORY_SIDE_MENU) {
+                openCategoryMenu();
+                CATEGORY_SIDE_MENU = true;
+            }
+        } else {
+            closeCategoryMenu();
+            CATEGORY_SIDE_MENU = false;
+        }
+
+        if (itemId == R.id.btn_search) {
+            selectedMenu = Constants.MENU_SEARCH;
+            changeFragment(new SearchMoviesFragment());
+        } else if (itemId == R.id.btn_home) {
+            selectedMenu = Constants.MENU_HOME;
+            changeFragment(HomeFragment.newInstance("", "1"));
+        } else if (itemId == R.id.btn_movies) {
+            selectedMenu = Constants.MENU_MOVIE;
+            changeFragment(HomeFragment.newInstance("", "2"));
+        } else if (itemId == R.id.btn_webseries) {
+            selectedMenu = Constants.MENU_WEBSERIES;
+            changeFragment(new com.bestcasttv.bestcasttvapp.webseries.ui.WebSeriesFragment());
+        } else if (itemId == R.id.btn_category) {
+            selectedMenu = Constants.MENU_CATEGORY;
+            if (!CATEGORY_SIDE_MENU) {
+                openCategoryMenu();
+                CATEGORY_SIDE_MENU = true;
+            }
+        } else if (itemId == R.id.btn_mylist) {
+            selectedMenu = Constants.MENU_MYLIST;
+            changeFragment(new MyListFragment());
+        } else if (itemId == R.id.signOutBT) {
+            selectedMenu = Constants.MENU_SIGNOUT;
+            signoutAlertDialog.show();
+            signoutAlertDialog.setOnDialogListener(new SignoutAlertDialog.SignOutOnclickListener() {
+                @Override
+                public void setOnClickSignOut() {
+                    signoutAlertDialog.dismiss();
+                    getLogOut(_token);
+                }
+            });
+        }
+    }
+
     private void navigateToDetailFragment(String itemId) {
 
         closeMenu();
@@ -174,51 +239,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
-                lastSelectedMenu.setActivated(false);
-                view.setActivated(true);
-                lastSelectedMenu = view;
-
-                int itemId = view.getId();
-
-                if (itemId == R.id.btn_category) {
-                    if (!CATEGORY_SIDE_MENU) {
-                        openCategoryMenu();
-                        CATEGORY_SIDE_MENU = true;
-                    }
-                } else {
-                    closeCategoryMenu();
-                    CATEGORY_SIDE_MENU = false;
-                }
-                if (itemId == R.id.btn_search) {
-                    selectedMenu = Constants.MENU_SEARCH;
-                    changeFragment(new SearchMoviesFragment());
-                } else if (itemId == R.id.btn_home) {
-                    selectedMenu = Constants.MENU_HOME;
-                    changeFragment(HomeFragment.newInstance("","1"));
-                } else if (itemId == R.id.btn_movies) {
-                    selectedMenu = Constants.MENU_MOVIE;
-                    changeFragment(HomeFragment.newInstance("","2"));
-                } else if (itemId == R.id.btn_category) {
-                    selectedMenu = Constants.MENU_CATEGORY;
-                    if (!CATEGORY_SIDE_MENU) {
-                        openCategoryMenu();
-                        CATEGORY_SIDE_MENU = true;
-                    }
-                } else if (itemId == R.id.btn_mylist) {
-                    selectedMenu = Constants.MENU_MYLIST;
-                    changeFragment(new MyListFragment());
-                } else if (itemId == R.id.signOutBT) {
-                    selectedMenu = Constants.MENU_SIGNOUT;
-                    signoutAlertDialog.show();
-                    signoutAlertDialog.setOnDialogListener(new SignoutAlertDialog.SignOutOnclickListener() {
-                        @Override
-                        public void setOnClickSignOut() {
-                            signoutAlertDialog.dismiss();
-                            getLogOut(_token);
-                        }
-                    });
-                }
-
+                handleMenuClick(view);
                 break;
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
@@ -250,6 +271,9 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
                 break;
             case Constants.MENU_MOVIE:
                 btnMovie.requestFocus();
+                break;
+            case Constants.MENU_WEBSERIES:
+                if (btnWebseries != null) btnWebseries.requestFocus();
                 break;
             case Constants.MENU_CATEGORY:
                 btnCategory.requestFocus();
