@@ -16,7 +16,6 @@ import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
 
-import com.bestcasttv.bestcasttvapp.main_page.ItemPresenter;
 import com.bestcasttv.bestcasttvapp.main_page.model.Movies;
 import com.bestcasttv.bestcasttvapp.main_page.model.MoviesMainCategoryModel;
 
@@ -26,6 +25,7 @@ public class SearchListRowFragment extends RowsSupportFragment {
 
     private OnSelectedListener itemSelectedListener;
     private OnClickListener itemClickListener;
+    private final SearchMovieItemPresenter movieItemPresenter = new SearchMovieItemPresenter();
 
     private final ListRowPresenter listRowPresenter = new ListRowPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM) {
         @Override
@@ -50,20 +50,35 @@ public class SearchListRowFragment extends RowsSupportFragment {
     }
 
     public void bindData(List<MoviesMainCategoryModel> dataList) {
+        rootAdapter.clear();
+        if (dataList == null || dataList.isEmpty()) {
+            return;
+        }
 
         for (int i = 0; i < dataList.size(); i++) {
-            List<Movies> result = dataList.get(i).getMovies();
-            ArrayObjectAdapter arrayObjectAdapter = new ArrayObjectAdapter(new ItemPresenter());
-
-            for (Movies detail : result) {
-                arrayObjectAdapter.add(detail);
+            MoviesMainCategoryModel category = dataList.get(i);
+            if (category == null || category.getMovies() == null || category.getMovies().isEmpty()) {
+                continue;
             }
 
-            HeaderItem headerItem = new HeaderItem(dataList.get(i).getTitle());
+            List<Movies> result = category.getMovies();
+            ArrayObjectAdapter arrayObjectAdapter = new ArrayObjectAdapter(movieItemPresenter);
+
+            for (Movies detail : result) {
+                if (detail != null) {
+                    arrayObjectAdapter.add(detail);
+                }
+            }
+
+            String title = category.getTitle();
+            HeaderItem headerItem = new HeaderItem(title != null ? title : "");
             ListRow listRow = new ListRow(headerItem, arrayObjectAdapter);
-            rootAdapter.clear();
             rootAdapter.add(listRow);
         }
+    }
+
+    public void clearData() {
+        rootAdapter.clear();
     }
 
 
