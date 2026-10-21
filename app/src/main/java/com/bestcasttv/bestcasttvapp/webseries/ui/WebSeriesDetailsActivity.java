@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -65,6 +66,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
     private ResumeModel resumeData;
     private List<SeasonModel> seasonList = new ArrayList<>();
     private SeasonModel selectedSeason;
+    private int selectedSeasonIndex = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -94,6 +96,8 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
 
         recyclerSeasons.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         recyclerEpisodes.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerSeasons.setNestedScrollingEnabled(false);
+        recyclerEpisodes.setNestedScrollingEnabled(false);
 
         btnPlayResume.setOnClickListener(v -> onPlayResumeClicked());
 
@@ -107,7 +111,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
     }
 
     private void loadWebSeriesDetails() {
-        if (loadingDialog != null) loadingDialog.show();
+        if (loadingDialog != null && !isFinishing()) loadingDialog.show();
 
         ApiService apiService = RetrofitClient.getApiService(token);
         Call<JsonObject> call = apiService.getWebseriesWatchdetail(webSeriesId, profileID);
@@ -115,7 +119,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (loadingDialog != null) loadingDialog.cancel();
+                if (loadingDialog != null && !isFinishing()) loadingDialog.cancel();
 
                 if (response.isSuccessful() && response.body() != null) {
                     try {
@@ -140,7 +144,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (loadingDialog != null) loadingDialog.cancel();
+                if (loadingDialog != null && !isFinishing()) loadingDialog.cancel();
                 Log.e("WebSeriesDetails", "Network error", t);
                 if (appUtils != null) appUtils.showToast("Network error.");
             }
@@ -152,6 +156,29 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
 
         txtSeriesTitle.setText(webSeriesData.getTitle());
         txtSeriesCertificate.setText(webSeriesData.getCertificate() != null ? webSeriesData.getCertificate() : "U/A 13+");
+
+        String seriesYear = "";
+        if (webSeriesData.getYear() != null && !webSeriesData.getYear().trim().isEmpty()) {
+            seriesYear = webSeriesData.getYear().trim();
+        } else {
+            String dateStr = webSeriesData.getReleaseDate();
+            if (dateStr == null || dateStr.trim().isEmpty()) {
+                dateStr = webSeriesData.getPublishedDate();
+            }
+            if (dateStr != null && !dateStr.trim().isEmpty() && appUtils != null) {
+                try {
+                    seriesYear = appUtils.getDateTimeToYear(dateStr);
+                } catch (Exception ignored) {}
+            }
+        }
+        if (txtSeriesYear != null) {
+            if (!seriesYear.isEmpty()) {
+                txtSeriesYear.setVisibility(View.VISIBLE);
+                txtSeriesYear.setText(seriesYear);
+            } else {
+                txtSeriesYear.setVisibility(View.GONE);
+            }
+        }
 
         if (txtSeriesSeasonsCount != null) {
             int count = seasonList != null ? seasonList.size() : 0;
@@ -191,18 +218,37 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
         }
 
         if (seasonList != null && !seasonList.isEmpty()) {
-            selectedSeason = seasonList.get(0);
+            if (selectedSeasonIndex < 0 || selectedSeasonIndex >= seasonList.size()) {
+                selectedSeasonIndex = 0;
+            }
+            selectedSeason = seasonList.get(selectedSeasonIndex);
+            List<EpisodeModel> currentEpisodes = (selectedSeason != null && selectedSeason.getEpisodes() != null)
+                    ? selectedSeason.getEpisodes()
+                    : new ArrayList<>();
 
-            seasonAdapter = new SeasonAdapter(seasonList, (season, position) -> {
-                selectedSeason = season;
-                if (episodeAdapter != null) {
-                    episodeAdapter.updateEpisodes(season.getEpisodes());
-                }
-            });
-            recyclerSeasons.setAdapter(seasonAdapter);
+            if (seasonAdapter == null) {
+                seasonAdapter = new SeasonAdapter(seasonList, (season, position) -> {
+                    selectedSeasonIndex = position;
+                    selectedSeason = season;
+                    if (episodeAdapter != null) {
+                        List<EpisodeModel> eps = (season != null && season.getEpisodes() != null)
+                                ? season.getEpisodes()
+                                : new ArrayList<>();
+                        episodeAdapter.updateEpisodes(eps);
+                    }
+                });
+                seasonAdapter.setSelectedPosition(selectedSeasonIndex);
+                recyclerSeasons.setAdapter(seasonAdapter);
+            } else {
+                seasonAdapter.setSelectedPosition(selectedSeasonIndex);
+            }
 
-            episodeAdapter = new EpisodeAdapter(selectedSeason.getEpisodes(), (episode, position) -> launchPlayer(episode));
-            recyclerEpisodes.setAdapter(episodeAdapter);
+            if (episodeAdapter == null) {
+                episodeAdapter = new EpisodeAdapter(currentEpisodes, (episode, position) -> launchPlayer(episode));
+                recyclerEpisodes.setAdapter(episodeAdapter);
+            } else {
+                episodeAdapter.updateEpisodes(currentEpisodes);
+            }
         }
     }
 
@@ -213,8 +259,9 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
 
         if (resumeData != null && resumeData.getEpisodeId() != null && !resumeData.getEpisodeId().isEmpty()) {
             for (SeasonModel season : seasonList) {
+                if (season == null || season.getEpisodes() == null) continue;
                 for (EpisodeModel episode : season.getEpisodes()) {
-                    if (resumeData.getEpisodeId().equals(episode.getId())) {
+                    if (episode != null && resumeData.getEpisodeId().equals(episode.getId())) {
                         targetEpisode = episode;
                         break;
                     }
@@ -223,7 +270,7 @@ public class WebSeriesDetailsActivity extends FragmentActivity {
             }
         }
 
-        if (targetEpisode == null && !seasonList.get(0).getEpisodes().isEmpty()) {
+        if (targetEpisode == null && seasonList.get(0) != null && seasonList.get(0).getEpisodes() != null && !seasonList.get(0).getEpisodes().isEmpty()) {
             targetEpisode = seasonList.get(0).getEpisodes().get(0);
         }
 

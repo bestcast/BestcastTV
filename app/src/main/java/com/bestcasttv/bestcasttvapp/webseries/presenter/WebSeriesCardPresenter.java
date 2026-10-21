@@ -15,8 +15,12 @@ import com.bumptech.glide.Glide;
 
 public class WebSeriesCardPresenter extends Presenter {
 
-    private static final int CARD_WIDTH = 310;
-    private static final int CARD_HEIGHT = 175;
+    private static final int CARD_WIDTH_DP = 260;
+    private static final int CARD_HEIGHT_DP = 146;
+
+    private int dpToPx(Context context, int dp) {
+        return Math.round(dp * context.getResources().getDisplayMetrics().density);
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
@@ -58,7 +62,9 @@ public class WebSeriesCardPresenter extends Presenter {
                 imageUrl = RetrofitClient.BASE_URL + "/" + imageUrl;
             }
 
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
+            int widthPx = dpToPx(cardView.getContext(), CARD_WIDTH_DP);
+            int heightPx = dpToPx(cardView.getContext(), CARD_HEIGHT_DP);
+            cardView.setMainImageDimensions(widthPx, heightPx);
             cardView.getMainImageView().setScaleType(ImageView.ScaleType.FIT_XY);
 
             Glide.with(cardView.getContext())

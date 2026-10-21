@@ -51,6 +51,15 @@ public class WebSeriesModel implements Serializable {
     @SerializedName("resume")
     private ResumeModel resume;
 
+    @SerializedName("release_date")
+    private String releaseDate;
+
+    @SerializedName("published_date")
+    private String publishedDate;
+
+    @SerializedName("year")
+    private String year;
+
     public WebSeriesModel() {}
 
     public String getId() {
@@ -171,5 +180,29 @@ public class WebSeriesModel implements Serializable {
 
     public void setResume(ResumeModel resume) {
         this.resume = resume;
+    }
+
+    public String getReleaseDate() {
+        return releaseDate;
+    }
+
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public String getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(String publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+
+    public String getYear() {
+        return year;
+    }
+
+    public void setYear(String year) {
+        this.year = year;
     }
 }

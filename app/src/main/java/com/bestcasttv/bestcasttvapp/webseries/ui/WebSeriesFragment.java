@@ -87,6 +87,7 @@ public class WebSeriesFragment extends Fragment {
 
         listFragment.setOnContentSelectedListener(series -> updateBanner(series));
         listFragment.setOnItemClickListener(series -> {
+            if (series == null || series.getId() == null) return;
             Intent intent = new Intent(getContext(), WebSeriesDetailsActivity.class);
             intent.putExtra("webseries_id", series.getId());
             startActivity(intent);
@@ -96,7 +97,7 @@ public class WebSeriesFragment extends Fragment {
     }
 
     private void loadWebSeriesBlocks() {
-        if (loadingDialog != null) loadingDialog.show();
+        if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.show();
 
         ApiService apiService = RetrofitClient.getApiService(token);
         Call<JsonObject> call = apiService.getWebseriesBlockslist("1", profileID, "0", "", "");
@@ -104,7 +105,7 @@ public class WebSeriesFragment extends Fragment {
         call.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (loadingDialog != null) loadingDialog.cancel();
+                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.cancel();
 
                 if (response.isSuccessful() && response.body() != null) {
                     try {
@@ -117,9 +118,18 @@ public class WebSeriesFragment extends Fragment {
                             List<WebSeriesBlockModel> blockList = gson.fromJson(dataArray.toString(), listType);
 
                             if (blockList != null && !blockList.isEmpty()) {
-                                listFragment.bindData(blockList);
-                                if (!blockList.get(0).getWebseriesList().isEmpty()) {
-                                    updateBanner(blockList.get(0).getWebseriesList().get(0));
+                                if (listFragment != null) {
+                                    listFragment.bindData(blockList);
+                                }
+                                WebSeriesModel initialSeries = null;
+                                for (WebSeriesBlockModel block : blockList) {
+                                    if (block != null && block.getWebseriesList() != null && !block.getWebseriesList().isEmpty()) {
+                                        initialSeries = block.getWebseriesList().get(0);
+                                        if (initialSeries != null) break;
+                                    }
+                                }
+                                if (initialSeries != null) {
+                                    updateBanner(initialSeries);
                                 }
                             }
                         }
@@ -133,7 +143,7 @@ public class WebSeriesFragment extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (loadingDialog != null) loadingDialog.cancel();
+                if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) loadingDialog.cancel();
                 Log.e("WebSeriesFragment", "Network error", t);
                 if (appUtils != null) appUtils.showToast("Network error.");
             }
@@ -142,6 +152,7 @@ public class WebSeriesFragment extends Fragment {
 
     private void updateBanner(WebSeriesModel series) {
         if (series == null) return;
+        if (getActivity() == null || !isAdded()) return;
 
         if (txtTitle != null) txtTitle.setText(series.getTitle());
 

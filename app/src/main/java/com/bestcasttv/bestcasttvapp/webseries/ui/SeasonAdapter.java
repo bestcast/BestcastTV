@@ -29,8 +29,16 @@ public class SeasonAdapter extends RecyclerView.Adapter<SeasonAdapter.SeasonView
     }
 
     public void setSelectedPosition(int position) {
-        this.selectedPosition = position;
-        notifyDataSetChanged();
+        if (this.selectedPosition != position) {
+            int previousPosition = this.selectedPosition;
+            this.selectedPosition = position;
+            notifyItemChanged(previousPosition);
+            notifyItemChanged(selectedPosition);
+        }
+    }
+
+    public int getSelectedPosition() {
+        return selectedPosition;
     }
 
     @NonNull
@@ -52,8 +60,11 @@ public class SeasonAdapter extends RecyclerView.Adapter<SeasonAdapter.SeasonView
         holder.txtSeason.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 int newPos = holder.getBindingAdapterPosition();
-                if (newPos != RecyclerView.NO_POSITION) {
+                if (newPos != RecyclerView.NO_POSITION && newPos != selectedPosition) {
+                    int previous = selectedPosition;
                     selectedPosition = newPos;
+                    notifyItemChanged(previous);
+                    notifyItemChanged(selectedPosition);
                     if (listener != null && newPos < seasons.size()) {
                         listener.onSeasonClick(seasons.get(newPos), newPos);
                     }
@@ -63,8 +74,11 @@ public class SeasonAdapter extends RecyclerView.Adapter<SeasonAdapter.SeasonView
 
         holder.txtSeason.setOnClickListener(v -> {
             int newPos = holder.getBindingAdapterPosition();
-            if (newPos != RecyclerView.NO_POSITION) {
+            if (newPos != RecyclerView.NO_POSITION && newPos != selectedPosition) {
+                int previous = selectedPosition;
                 selectedPosition = newPos;
+                notifyItemChanged(previous);
+                notifyItemChanged(selectedPosition);
                 if (listener != null && newPos < seasons.size()) {
                     listener.onSeasonClick(seasons.get(newPos), newPos);
                 }

@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,6 +30,8 @@ import com.bestcasttv.bestcasttvapp.webseries.model.SeasonModel;
 import com.bestcasttv.bestcasttvapp.webseries.model.UserEpisodeRequestModel;
 import com.bestcasttv.bestcasttvapp.webseries.model.WebSeriesModel;
 import com.google.gson.JsonObject;
+
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Timer;
@@ -62,6 +65,7 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
     private boolean overlayShown = false;
     private boolean overlayCancelled = false;
     private CountDownTimer overlayTimer;
+    private boolean isTransitioningToNext = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -118,6 +122,19 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
             }
 
             @Override
+            public void onPlayCompleted(PlaybackGlue glue) {
+                super.onPlayCompleted(glue);
+                Log.d("WebSeriesPlayer", "onPlayCompleted triggered");
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (!isTrailer && nextEpisode != null && !overlayCancelled) {
+                            playNextEpisode();
+                        }
+                    });
+                }
+            }
+
+            @Override
             public void onPlayStateChanged(PlaybackGlue glue) {
                 super.onPlayStateChanged(glue);
             }
@@ -160,12 +177,14 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
 
         boolean foundCurrent = false;
         for (SeasonModel season : seasons) {
+            if (season == null || season.getEpisodes() == null) continue;
             for (EpisodeModel ep : season.getEpisodes()) {
+                if (ep == null) continue;
                 if (foundCurrent) {
                     nextEpisode = ep;
                     return;
                 }
-                if (ep.getId().equals(currentEpisode.getId())) {
+                if (ep.getId() != null && ep.getId().equals(currentEpisode.getId())) {
                     foundCurrent = true;
                 }
             }
@@ -175,6 +194,8 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
     private void startProgressTrackingTimer() {
         progressTimer = new Timer();
         progressTimer.schedule(new TimerTask() {
+            private int secondTicks = 0;
+
             @Override
             public void run() {
                 if (getActivity() == null || mTransportControlGlue == null || !mTransportControlGlue.isPlaying()) {
@@ -186,24 +207,26 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
 
                 if (durationMs <= 0) return;
 
-                int currentSec = (int) (currentPosMs / 1000);
-                int durationSec = (int) (durationMs / 1000);
-                int watchedPercent = (int) (((double) currentPosMs / (double) durationMs) * 100.0);
+                secondTicks++;
+                // Sync watch progress to backend every 15 seconds
+                if (secondTicks >= 15) {
+                    secondTicks = 0;
+                    int currentSec = (int) (currentPosMs / 1000);
+                    int durationSec = (int) (durationMs / 1000);
+                    int watchedPercent = (int) (((double) currentPosMs / (double) durationMs) * 100.0);
 
-                if (!isTrailer && currentEpisode != null) {
-                    sendProgressToBackend(currentEpisode.getId(), currentSec, watchedPercent, durationSec);
+                    if (!isTrailer && currentEpisode != null) {
+                        sendProgressToBackend(currentEpisode.getId(), currentSec, watchedPercent, durationSec);
+                    }
                 }
 
                 long remainingMs = durationMs - currentPosMs;
-                if (!isTrailer && nextEpisode != null && remainingMs <= 10000 && !overlayShown && !overlayCancelled) {
+                // Show countdown overlay when 10 seconds remaining
+                if (!isTrailer && nextEpisode != null && remainingMs <= 10000 && remainingMs > 500 && !overlayShown && !overlayCancelled) {
                     getActivity().runOnUiThread(() -> showNextOverlay());
                 }
-
-                if (remainingMs <= 500 && nextEpisode != null) {
-                    getActivity().runOnUiThread(() -> playNextEpisode());
-                }
             }
-        }, 0, 15000);
+        }, 1000, 1000);
     }
 
     private void sendProgressToBackend(String episodeId, int watchTimeSec, int watchedPercent, int durationSec) {
@@ -269,19 +292,93 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
     }
 
     private void playNextEpisode() {
-        if (nextEpisode == null) return;
+        if (nextEpisode == null || isTransitioningToNext) return;
 
         hideNextOverlay(false);
+        isTransitioningToNext = true;
 
-        currentEpisode = nextEpisode;
+        EpisodeModel targetEpisode = nextEpisode;
+        String url = targetEpisode.getVideoUrl();
+        if (url != null && !url.trim().isEmpty()) {
+            startEpisodePlayback(targetEpisode);
+        } else {
+            fetchAndPlayEpisode(targetEpisode);
+        }
+    }
+
+    private void fetchAndPlayEpisode(EpisodeModel targetEpisode) {
+        if (getActivity() == null) {
+            isTransitioningToNext = false;
+            return;
+        }
+
+        ApiService apiService = RetrofitClient.getApiService(token);
+        Call<JsonObject> call = apiService.getUserEpisode(targetEpisode.getId(), profileID);
+
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (getActivity() == null || !isAdded()) {
+                    isTransitioningToNext = false;
+                    return;
+                }
+
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(response.body().toString());
+                        JSONObject dataObj = jsonObject.optJSONObject("data");
+                        if (dataObj != null) {
+                            String url = dataObj.optString("video_url", "");
+                            if (url.isEmpty()) url = dataObj.optString("moviesource", "");
+                            if (url.isEmpty()) url = dataObj.optString("trailer", "");
+                            if (!url.isEmpty()) {
+                                targetEpisode.setVideoUrl(url);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("WebSeriesPlayer", "Error parsing getuserepisode", e);
+                    }
+                }
+
+                String resolvedUrl = targetEpisode.getVideoUrl();
+                if (resolvedUrl != null && !resolvedUrl.trim().isEmpty()) {
+                    startEpisodePlayback(targetEpisode);
+                } else {
+                    isTransitioningToNext = false;
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Video source not available for " + targetEpisode.getTitle(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                isTransitioningToNext = false;
+                Log.e("WebSeriesPlayer", "Network error fetching next episode stream", t);
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Network error loading next episode", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void startEpisodePlayback(EpisodeModel episode) {
+        currentEpisode = episode;
         findNextEpisode();
         overlayShown = false;
         overlayCancelled = false;
+        isTransitioningToNext = false;
 
-        mTransportControlGlue.setTitle(currentEpisode.getTitle());
-        if (currentEpisode.getVideoUrl() != null) {
+        if (mTransportControlGlue != null) {
+            mTransportControlGlue.setTitle(currentEpisode.getTitle());
+            mTransportControlGlue.setSubtitle(webSeries != null ? webSeries.getTitle() : "");
+        }
+
+        if (playerAdapter != null && currentEpisode.getVideoUrl() != null && !currentEpisode.getVideoUrl().isEmpty()) {
             playerAdapter.setDataSource(Uri.parse(currentEpisode.getVideoUrl()));
-            mTransportControlGlue.playWhenPrepared();
+            if (mTransportControlGlue != null) {
+                mTransportControlGlue.playWhenPrepared();
+            }
         }
     }
 
@@ -289,6 +386,16 @@ public class WebSeriesPlaybackVideoFragment extends VideoSupportFragment {
     public void onPause() {
         super.onPause();
         if (mTransportControlGlue != null) {
+            if (!isTrailer && currentEpisode != null) {
+                long currentPosMs = mTransportControlGlue.getCurrentPosition();
+                long durationMs = mTransportControlGlue.getDuration();
+                if (durationMs > 0 && currentPosMs > 0) {
+                    int currentSec = (int) (currentPosMs / 1000);
+                    int durationSec = (int) (durationMs / 1000);
+                    int watchedPercent = (int) (((double) currentPosMs / (double) durationMs) * 100.0);
+                    sendProgressToBackend(currentEpisode.getId(), currentSec, watchedPercent, durationSec);
+                }
+            }
             mTransportControlGlue.pause();
         }
         if (getActivity() != null) {

@@ -16,6 +16,7 @@ import com.bestcasttv.bestcasttvapp.api_services.RetrofitClient;
 import com.bestcasttv.bestcasttvapp.webseries.model.EpisodeModel;
 import com.bumptech.glide.Glide;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.EpisodeViewHolder> {
@@ -28,12 +29,12 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.EpisodeV
     }
 
     public EpisodeAdapter(List<EpisodeModel> episodes, OnEpisodeClickListener listener) {
-        this.episodes = episodes;
+        this.episodes = episodes != null ? episodes : new ArrayList<>();
         this.listener = listener;
     }
 
     public void updateEpisodes(List<EpisodeModel> newEpisodes) {
-        this.episodes = newEpisodes;
+        this.episodes = newEpisodes != null ? newEpisodes : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -46,7 +47,9 @@ public class EpisodeAdapter extends RecyclerView.Adapter<EpisodeAdapter.EpisodeV
 
     @Override
     public void onBindViewHolder(@NonNull EpisodeViewHolder holder, int position) {
+        if (episodes == null || position >= episodes.size()) return;
         EpisodeModel episode = episodes.get(position);
+        if (episode == null) return;
 
         holder.txtTitle.setText(episode.getTitle());
         holder.txtDuration.setText(episode.getDurationText());

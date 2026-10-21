@@ -53,17 +53,27 @@ public class WebSeriesListRowFragment extends RowsSupportFragment {
 
     public void bindData(List<WebSeriesBlockModel> dataList) {
         rootAdapter.clear();
+        if (dataList == null) return;
+
         for (WebSeriesBlockModel block : dataList) {
+            if (block == null) continue;
             List<WebSeriesModel> result = block.getWebseriesList();
+            if (result == null || result.isEmpty()) continue;
+
             ArrayObjectAdapter arrayObjectAdapter = new ArrayObjectAdapter(new WebSeriesCardPresenter());
 
             for (WebSeriesModel series : result) {
-                arrayObjectAdapter.add(series);
+                if (series != null) {
+                    arrayObjectAdapter.add(series);
+                }
             }
 
-            HeaderItem headerItem = new HeaderItem(block.getTitle());
-            ListRow listRow = new ListRow(headerItem, arrayObjectAdapter);
-            rootAdapter.add(listRow);
+            if (arrayObjectAdapter.size() > 0) {
+                String title = block.getTitle() != null ? block.getTitle() : "";
+                HeaderItem headerItem = new HeaderItem(title);
+                ListRow listRow = new ListRow(headerItem, arrayObjectAdapter);
+                rootAdapter.add(listRow);
+            }
         }
     }
 
