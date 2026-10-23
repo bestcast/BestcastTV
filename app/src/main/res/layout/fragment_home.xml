@@ -60,10 +60,11 @@
     <View
         android:id="@+id/gradient_vertical"
         android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/img_banner"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:background="@drawable/banner_bottom_gradient" />
 
     <!-- Hero Title -->

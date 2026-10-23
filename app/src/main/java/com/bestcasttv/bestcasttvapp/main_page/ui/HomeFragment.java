@@ -591,6 +591,12 @@ public class HomeFragment extends Fragment {
 
                                 String categoryTitle = responseCat.optString("title", "");
                                 String categoryId = responseCat.optString("id", "");
+
+                                // Exclude "webseries" block from the Home page (pageId = 1)
+                                if (isHomePage() && categoryTitle != null && isWebSeriesTitle(categoryTitle)) {
+                                    continue;
+                                }
+
                                 JSONArray jsonArrayMovies = responseCat.optJSONArray("movies");
 
                                 List<Movies> categoryMovies = new ArrayList<>();
@@ -721,6 +727,16 @@ public class HomeFragment extends Fragment {
             return rawPath;
         }
         return RetrofitClient.BASE_URL + "/" + rawPath;
+    }
+
+    private boolean isHomePage() {
+        return mPageId == null || mPageId.trim().isEmpty() || "1".equals(mPageId.trim());
+    }
+
+    private boolean isWebSeriesTitle(String title) {
+        if (title == null) return false;
+        String normalized = title.trim().toLowerCase().replaceAll("[\\s_-]", "");
+        return normalized.contains("webseries") || normalized.contains("series");
     }
 
     @Override
