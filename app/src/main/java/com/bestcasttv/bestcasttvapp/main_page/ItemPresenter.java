@@ -5,46 +5,93 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.Presenter;
 
-import com.bumptech.glide.Glide;
 import com.bestcasttv.bestcasttvapp.R;
+import com.bestcasttv.bestcasttvapp.api_services.RetrofitClient;
 import com.bestcasttv.bestcasttvapp.main_page.model.Movies;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 
 public class ItemPresenter extends Presenter {
+
+    private int widthPx = -1;
+    private int heightPx = -1;
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        android.view.View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view, parent, false);
-        android.view.ViewGroup.LayoutParams params = view.getLayoutParams();
-        params.width = getWidthInPercent(parent.getContext(), 12);
-        params.height = getHeightInPercent(parent.getContext(), 32);
+        Context context = parent.getContext();
+        float density = context.getResources().getDisplayMetrics().density;
+
+        if (widthPx <= 0) {
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+            // Responsive width: ~12.5% of screen width with standard 1:1.48 vertical movie poster ratio
+            widthPx = Math.round(screenWidth * 0.125f);
+            heightPx = Math.round(widthPx * 1.48f);
+        }
+
+        android.view.View view = LayoutInflater.from(context).inflate(R.layout.item_view, parent, false);
+        view.setFocusable(true);
+        view.setFocusableInTouchMode(true);
+        view.setBackground(ContextCompat.getDrawable(context, R.drawable.card_rounded_bg));
+        view.setClipToOutline(true);
+        view.setForeground(ContextCompat.getDrawable(context, R.drawable.movie_card_focus_outline));
+
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        if (params != null) {
+            params.width = widthPx;
+            params.height = heightPx;
+            int marginPx = Math.round(4 * density);
+            params.setMargins(marginPx, marginPx, marginPx, marginPx);
+            view.setLayoutParams(params);
+        }
         return new ViewHolder(view);
-    }
-
-    private int getWidthInPercent(Context context, int percent) {
-        int width = context.getResources().getDisplayMetrics().widthPixels;
-        return (width * percent) / 100;
-    }
-
-    private int getHeightInPercent(Context context, int percent) {
-        int height = context.getResources().getDisplayMetrics().heightPixels;
-        return (height * percent) / 100;
     }
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
+        if (!(item instanceof Movies)) return;
         Movies contentMovies = (Movies) item;
         ImageView imageView = viewHolder.view.findViewById(R.id.poster_image);
+        if (imageView == null) return;
+
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
         String url = contentMovies.getPortrait();
-        Glide.with(viewHolder.view.getContext())
+        if (url == null || url.trim().isEmpty()) {
+            url = contentMovies.getPortraitsmall();
+        }
+        if (url == null || url.trim().isEmpty()) {
+            url = contentMovies.getThumbnail();
+        }
+
+        if (url != null && !url.trim().isEmpty() && !url.startsWith("http")) {
+            url = RetrofitClient.BASE_URL + "/" + url;
+        }
+
+        Context context = viewHolder.view.getContext();
+        float density = context.getResources().getDisplayMetrics().density;
+        int radiusPx = Math.round(10 * density);
+
+        Glide.with(context)
                 .load(url)
+                .override(widthPx > 0 ? widthPx : 300, heightPx > 0 ? heightPx : 450)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .placeholder(R.drawable.default_portrate_large)
                 .error(R.drawable.default_portrate_large)
+                .transform(new CenterCrop(), new RoundedCorners(radiusPx))
                 .into(imageView);
     }
 
     @Override
     public void onUnbindViewHolder(ViewHolder viewHolder) {
+        ImageView imageView = viewHolder.view.findViewById(R.id.poster_image);
+        if (imageView != null) {
+            Glide.with(viewHolder.view.getContext()).clear(imageView);
+            imageView.setImageDrawable(null);
+        }
     }
 }
-

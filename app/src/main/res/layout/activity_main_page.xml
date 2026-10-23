@@ -52,10 +52,12 @@
                         android:layout_height="50dp"
                         android:text="profile name"
                         android:padding="5dp"
-                        android:gravity="center"
-                        android:layout_gravity="center"
+                        android:gravity="center_vertical"
+                        android:layout_gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:textColor="@android:color/white"
-                        android:textSize="10sp" />
+                        android:textSize="12sp" />
 
 
                 </LinearLayout>
@@ -76,6 +78,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Search"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -88,6 +92,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Home"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -100,6 +106,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Movies"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -112,6 +120,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Web Series"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -124,6 +134,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Categories"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -131,12 +143,13 @@
                         android:id="@+id/btn_mylist"
                         android:layout_width="match_parent"
                         android:layout_height="45dp"
-                        
                         android:background="@drawable/selector_menu"
                         android:drawableLeft="@drawable/baseline_add_24"
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="My List"
                         android:textColor="@color/text_selector_white_grey" />
 
@@ -149,6 +162,8 @@
                         android:drawablePadding="16dp"
                         android:focusable="true"
                         android:gravity="center_vertical"
+                        android:singleLine="true"
+                        android:ellipsize="none"
                         android:text="Sign Out"
                         android:textColor="@color/text_selector_white_grey" />
 

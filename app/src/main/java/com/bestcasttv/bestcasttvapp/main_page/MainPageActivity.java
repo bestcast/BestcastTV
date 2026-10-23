@@ -33,6 +33,7 @@ import com.bestcasttv.bestcasttvapp.app_utils.AppUtils;
 import com.bestcasttv.bestcasttvapp.app_utils.LoadingDialog;
 import com.bestcasttv.bestcasttvapp.app_utils.SignoutAlertDialog;
 import com.bestcasttv.bestcasttvapp.main_page.model.Genres;
+import com.bestcasttv.bestcasttvapp.main_page.ui.AllMoviesFragment;
 import com.bestcasttv.bestcasttvapp.main_page.ui.HomeFragment;
 import com.bestcasttv.bestcasttvapp.mylist.MyListFragment;
 import com.bestcasttv.bestcasttvapp.search_page.SearchMoviesFragment;
@@ -116,6 +117,22 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         btnMyist.setOnKeyListener(this);
         signOutBtTextView.setOnKeyListener(this);
 
+        View.OnFocusChangeListener menuFocusListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
+                    openMenu();
+                    SIDE_MENU = true;
+                }
+            }
+        };
+        btnSearch.setOnFocusChangeListener(menuFocusListener);
+        btnHome.setOnFocusChangeListener(menuFocusListener);
+        btnMovie.setOnFocusChangeListener(menuFocusListener);
+        if (btnWebseries != null) btnWebseries.setOnFocusChangeListener(menuFocusListener);
+        btnCategory.setOnFocusChangeListener(menuFocusListener);
+        btnMyist.setOnFocusChangeListener(menuFocusListener);
+        signOutBtTextView.setOnFocusChangeListener(menuFocusListener);
+
         View.OnClickListener menuClickListener = this::handleMenuClick;
         btnSearch.setOnClickListener(menuClickListener);
         btnHome.setOnClickListener(menuClickListener);
@@ -142,7 +159,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
 
         lastSelectedMenu = btnHome;
         lastSelectedMenu.setActivated(true);
-        changeFragment(new HomeFragment());
+        changeFragment(HomeFragment.newInstance("", "1"));
 
         Glide.with(this)
                 .load(profilePicture)
@@ -193,7 +210,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
             changeFragment(HomeFragment.newInstance("", "1"));
         } else if (itemId == R.id.btn_movies) {
             selectedMenu = Constants.MENU_MOVIE;
-            changeFragment(HomeFragment.newInstance("", "2"));
+            changeFragment(AllMoviesFragment.newInstance());
         } else if (itemId == R.id.btn_webseries) {
             selectedMenu = Constants.MENU_WEBSERIES;
             changeFragment(new com.bestcasttv.bestcasttvapp.webseries.ui.WebSeriesFragment());
@@ -293,11 +310,19 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && SIDE_MENU && !CATEGORY_SIDE_MENU) {
             SIDE_MENU = false;
             closeMenu();
+            return true;
         }
 
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && CATEGORY_SIDE_MENU) {
-            categoryListView.requestFocus();
-            categoryListView.setSelection(0);
+            closeCategoryMenu();
+            closeMenu();
+            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+            if (fragment instanceof HomeFragment) {
+                ((HomeFragment) fragment).requestFocusOnContent();
+            } else {
+                fragmentContainer.requestFocus();
+            }
+            return true;
         }
 
         return super.onKeyDown(keyCode, event);
@@ -306,19 +331,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     @SuppressLint("RestrictedApi")
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        boolean handled = super.dispatchKeyEvent(event);
-        if (!handled && event.getAction() == KeyEvent.ACTION_UP) {
-            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                View currentFocus = getCurrentFocus();
-                if (currentFocus instanceof SearchView) {
-                    ListView listView = findViewById(R.id.categoryListView);
-                    listView.requestFocus();
-                    listView.setSelection(0);
-                    handled = true;
-                }
-            }
-        }
-        return handled;
+        return super.dispatchKeyEvent(event);
     }
 
 
@@ -341,6 +354,17 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
             }
         }
 
+        if (!Constants.MENU_HOME.equals(selectedMenu)) {
+            selectedMenu = Constants.MENU_HOME;
+            if (lastSelectedMenu != null) {
+                lastSelectedMenu.setActivated(false);
+            }
+            btnHome.setActivated(true);
+            lastSelectedMenu = btnHome;
+            changeFragment(HomeFragment.newInstance("", "1"));
+            return;
+        }
+
         super.onBackPressed();
     }
 
@@ -356,7 +380,12 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         navBar.requestLayout();
         navBar.getLayoutParams().width = Common.getWidthInPercent(this, 5);
 
-        fragmentContainer.requestFocus();
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+        if (fragment instanceof HomeFragment) {
+            ((HomeFragment) fragment).requestFocusOnContent();
+        } else {
+            fragmentContainer.requestFocus();
+        }
         SIDE_MENU = false;
     }
 
@@ -443,6 +472,12 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
                                 if (event.getAction() == KeyEvent.ACTION_DOWN) {
                                     int selectedPosition = categoryListView.getSelectedItemPosition();
                                     switch (keyCode) {
+                                        case KeyEvent.KEYCODE_DPAD_LEFT:
+                                            closeCategoryMenu();
+                                            if (btnCategory != null) {
+                                                btnCategory.requestFocus();
+                                            }
+                                            return true;
                                         case KeyEvent.KEYCODE_DPAD_UP:
                                             if (selectedPosition > 0) {
                                                 categoryListView.setSelection(selectedPosition - 1);
@@ -457,11 +492,10 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
                                             break;
                                         case KeyEvent.KEYCODE_DPAD_CENTER:
                                         case KeyEvent.KEYCODE_ENTER:
-                                            String categoryID = allCategoryItems.get(selectedPosition).getId();
-                                            String categoryTitle = allCategoryItems.get(selectedPosition).getTitle();
-//                                            appUtils.showToast("Selected: " + categoryTitle);
-//                                            navigateToDetailFragment(categoryID);
-                                            changeFragment(HomeFragment.newInstance(categoryID, "1"));
+                                            if (selectedPosition >= 0 && selectedPosition < allCategoryItems.size()) {
+                                                String categoryID = allCategoryItems.get(selectedPosition).getId();
+                                                changeFragment(HomeFragment.newInstance(categoryID, "1"));
+                                            }
                                             return true;
                                         default:
                                             break;
@@ -519,6 +553,8 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
 
                         if ("success".equals(status)) {
                             appUtils.showToast("Logout Successful.");
+
+                            HomeFragment.clearCache();
 
                             SharedPreferences.Editor editor = sharedPreferences.edit();
                             editor.putBoolean(getString(R.string.shared_login_status), false);

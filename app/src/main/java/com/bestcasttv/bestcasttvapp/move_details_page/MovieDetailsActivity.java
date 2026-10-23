@@ -72,10 +72,16 @@ public class MovieDetailsActivity extends FragmentActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_movie_details);
 
         String _movieId = getIntent().getStringExtra("movieId");
-//        _WatchedPercent = getIntent().getStringExtra("WatchedPercent");
-//        _WatchingTime = getIntent().getStringExtra("WatchingTime");
+        String wp = getIntent().getStringExtra("WatchedPercent");
+        String wt = getIntent().getStringExtra("WatchingTime");
+        _WatchedPercent = wp != null ? wp : "";
+        _WatchingTime = wt != null ? wt : "";
 
-        movieId = Integer.parseInt(_movieId);
+        try {
+            movieId = _movieId != null ? Integer.parseInt(_movieId) : 0;
+        } catch (Exception e) {
+            movieId = 0;
+        }
         loadingDialog = new LoadingDialog(this);
 
         sharedPreferences = getSharedPreferences(getString(R.string.shared_name), Context.MODE_PRIVATE);
@@ -356,47 +362,49 @@ public class MovieDetailsActivity extends FragmentActivity {
                                     _moviesource.toString(),
                                     _subtitle_status.toString());
 
-                            if (jsonObject1.getJSONObject("usermovies") != null || jsonObject1.getString("usermovies") != "") {
+                            if (jsonObject1.has("usermovies") && !jsonObject1.isNull("usermovies")) {
+                                Object umRaw = jsonObject1.get("usermovies");
+                                if (umRaw instanceof JSONObject) {
+                                    JSONObject jsonObject2 = (JSONObject) umRaw;
 
-                                JSONObject jsonObject2 = jsonObject1.getJSONObject("usermovies");
+                                    int myList = jsonObject2.optInt("mylist", 0);
+                                    int likeStatus = jsonObject2.optInt("likes", 0);
+                                    _WatchingTime = jsonObject2.optString("watch_time", "");
+                                    String watching = jsonObject2.optString("watching", "");
+                                    String watched = jsonObject2.optString("watched", "");
+                                    _WatchedPercent = jsonObject2.optString("watched_percent", "");
 
-                                int myList = jsonObject2.getInt("mylist");
-                                int likeStatus = jsonObject2.getInt("likes");
-                                _WatchingTime = jsonObject2.getString("watch_time").toString();
-                                String watching = jsonObject2.getString("watching").toString();
-                                String watched = jsonObject2.getString("watched").toString();
-                                _WatchedPercent = jsonObject2.getString("watched_percent").toString();
+                                    Log.d("_WatchingTime_percent", _WatchingTime + "-- " + _WatchedPercent);
+                                    if (!_WatchedPercent.isEmpty()) {
+                                        binding.seekViewProgressBar.setVisibility(View.VISIBLE);
+                                        try {
+                                            binding.seekViewProgressBar.setProgress(Integer.parseInt(_WatchedPercent));
+                                        } catch (Exception ignored) {}
+                                    } else {
+                                        binding.seekViewProgressBar.setVisibility(View.GONE);
+                                    }
+                                    if (myList == 0) {
+                                        _isRated = false;
+                                    } else {
+                                        _isRated = true;
+                                    }
 
-                                Log.d("_WatchingTime_percent", _WatchingTime + "-- " + _WatchedPercent);
-                                if (!_WatchedPercent.equals("")) {
-                                    binding.seekViewProgressBar.setVisibility(View.VISIBLE);
-                                    binding.seekViewProgressBar.setProgress(Integer.parseInt(_WatchedPercent));
-                                } else {
-                                    binding.seekViewProgressBar.setVisibility(View.GONE);
+                                    //TODO change if need based on like status 1, 2
+                                    if (likeStatus == 2) {
+                                        _isDisLike = true;
+                                        _isLike = false;
+                                    } else if (likeStatus == 1) {
+                                        _isDisLike = false;
+                                        _isLike = true;
+                                    } else {
+                                        _isDisLike = false;
+                                        _isLike = false;
+                                    }
+
+                                    setLikeImageResource();
+                                    setDisLikeImageResource();
+                                    setRateImageResource();
                                 }
-                                if (myList == 0) {
-                                    _isRated = false;
-                                } else {
-                                    _isRated = true;
-                                }
-
-                                //TODO change if need based on like status 1, 2
-                                if (likeStatus == 2) {
-                                    _isDisLike = true;
-                                    _isLike = false;
-                                } else if (likeStatus == 1) {
-                                    _isDisLike = false;
-                                    _isLike = true;
-                                } else {
-                                    _isDisLike = false;
-                                    _isLike = false;
-                                }
-
-                                setLikeImageResource();
-                                setDisLikeImageResource();
-                                setRateImageResource();
-
-
                             }
 
                             setData(movieData);
@@ -472,7 +480,7 @@ public class MovieDetailsActivity extends FragmentActivity {
                         }
 
                     } catch (JSONException e) {
-                        throw new RuntimeException(e);
+                        Log.e("MovieDetailsActivity", "Token error: " + e.getMessage());
                     }
 
 

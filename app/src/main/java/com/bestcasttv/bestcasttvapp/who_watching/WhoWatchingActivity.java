@@ -20,6 +20,7 @@ import com.bestcasttv.bestcasttvapp.api_services.RetrofitClient;
 import com.bestcasttv.bestcasttvapp.app_utils.AppUtils;
 import com.bestcasttv.bestcasttvapp.app_utils.LoadingDialog;
 import com.bestcasttv.bestcasttvapp.main_page.MainPageActivity;
+import com.bestcasttv.bestcasttvapp.main_page.ui.HomeFragment;
 import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
@@ -221,6 +222,8 @@ public class WhoWatchingActivity extends FragmentActivity {
                             editor.putString(getString(R.string.profilePicture), whoWatchingModel.profilePicture);
                             editor.putString(getString(R.string.isChild), String.valueOf(whoWatchingModel.isChild));
                             editor.commit();
+
+                            HomeFragment.clearCache();
 
                             Intent mainIntent = new Intent(WhoWatchingActivity.this, MainPageActivity.class);
                             finishAffinity();

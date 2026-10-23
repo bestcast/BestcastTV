@@ -14,7 +14,7 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.bestcasttv.bestcasttvapp.main_page.ui.AllMoviesFragment"
-        android:label="Settings"
-        tools:layout="@layout/fragment_all_movies" />
+        android:label="Movies"
+        tools:layout="@layout/fragment_home" />
 
 </navigation>
