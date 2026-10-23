@@ -2,10 +2,13 @@ package com.bestcasttv.bestcasttvapp.search_page;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.view.FocusFinder;
+import android.view.KeyEvent;
 import android.view.View;
 
 import androidx.leanback.app.RowsSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.BrowseFrameLayout;
 import androidx.leanback.widget.FocusHighlight;
 import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.ListRow;
@@ -15,7 +18,9 @@ import androidx.leanback.widget.OnItemViewSelectedListener;
 import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
+import androidx.leanback.widget.VerticalGridView;
 
+import com.bestcasttv.bestcasttvapp.R;
 import com.bestcasttv.bestcasttvapp.main_page.model.Movies;
 import com.bestcasttv.bestcasttvapp.main_page.model.MoviesMainCategoryModel;
 
@@ -47,6 +52,93 @@ public class SearchListRowFragment extends RowsSupportFragment {
 
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
         setOnItemViewClickedListener(new ItemViewClickListener());
+
+        // Configure D-pad focus searching on the BrowseFrameLayout
+        if (view instanceof BrowseFrameLayout) {
+            BrowseFrameLayout browseFrameLayout = (BrowseFrameLayout) view;
+            browseFrameLayout.setOnFocusSearchListener((focused, direction) -> {
+                if (direction == View.FOCUS_UP) {
+                    if (getActivity() != null) {
+                        View searchBar = getActivity().findViewById(R.id.searchText);
+                        if (searchBar != null) {
+                            return searchBar;
+                        }
+                    }
+                } else if (direction == View.FOCUS_LEFT) {
+                    View next = FocusFinder.getInstance().findNextFocus(browseFrameLayout, focused, View.FOCUS_LEFT);
+                    if (next != null && next != focused) {
+                        return next;
+                    }
+                    if (getActivity() != null) {
+                        View sidebar = getActivity().findViewById(R.id.btn_search);
+                        if (sidebar != null) {
+                            return sidebar;
+                        }
+                    }
+                }
+                return null;
+            });
+        }
+
+        // Also configure key listener on VerticalGridView as an extra layer of navigation reliability
+        VerticalGridView gridView = getVerticalGridView();
+        if (gridView != null) {
+            gridView.setOnKeyListener((v, keyCode, event) -> {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                        if (getActivity() != null) {
+                            View searchBar = getActivity().findViewById(R.id.searchText);
+                            if (searchBar != null) {
+                                searchBar.requestFocus();
+                                return true;
+                            }
+                        }
+                    } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                        View currentFocus = gridView.findFocus();
+                        if (currentFocus != null) {
+                            View next = FocusFinder.getInstance().findNextFocus(gridView, currentFocus, View.FOCUS_LEFT);
+                            if (next == null || next == currentFocus) {
+                                if (getActivity() != null) {
+                                    View sidebar = getActivity().findViewById(R.id.btn_search);
+                                    if (sidebar != null) {
+                                        sidebar.requestFocus();
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            });
+        }
+    }
+
+    public boolean hasResults() {
+        return rootAdapter != null && rootAdapter.size() > 0;
+    }
+
+    public boolean focusFirstItem() {
+        if (!hasResults()) {
+            return false;
+        }
+        VerticalGridView gridView = getVerticalGridView();
+        if (gridView != null) {
+            gridView.setSelectedPosition(0);
+            boolean focused = gridView.requestFocus();
+            if (!focused) {
+                gridView.post(() -> {
+                    gridView.setSelectedPosition(0);
+                    gridView.requestFocus();
+                });
+            }
+            return true;
+        }
+        View view = getView();
+        if (view != null) {
+            return view.requestFocus();
+        }
+        return false;
     }
 
     public void bindData(List<MoviesMainCategoryModel> dataList) {
@@ -81,7 +173,6 @@ public class SearchListRowFragment extends RowsSupportFragment {
         rootAdapter.clear();
     }
 
-
     public void setOnContentSelectedListener(OnSelectedListener listener) {
         this.itemSelectedListener = listener;
     }
@@ -97,7 +188,6 @@ public class SearchListRowFragment extends RowsSupportFragment {
     public interface OnSelectedListener {
         void onSelection(Movies model);
     }
-
 
     private class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override

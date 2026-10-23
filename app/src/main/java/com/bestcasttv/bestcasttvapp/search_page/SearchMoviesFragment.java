@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -152,11 +153,51 @@ public class SearchMoviesFragment extends Fragment {
             }
         });
 
-        searchText.requestFocus();
-        showKeyboard(getContext(), searchText);
+        // Key and D-pad handling for Search Input field
+        searchText.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    if (listFragment != null && listFragment.hasResults()) {
+                        hideKeyboard(getContext(), searchText);
+                        return listFragment.focusFirstItem();
+                    }
+                    return false;
+                } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                    if (searchText.getText() == null || searchText.getText().length() == 0 || searchText.getSelectionStart() <= 0) {
+                        hideKeyboard(getContext(), searchText);
+                        if (getActivity() != null) {
+                            View btnSearch = getActivity().findViewById(R.id.btn_search);
+                            if (btnSearch != null) {
+                                btnSearch.requestFocus();
+                                return true;
+                            }
+                        }
+                    }
+                } else if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+                    final String query = searchText.getText() != null ? searchText.getText().toString().trim() : "";
+                    hideKeyboard(getContext(), searchText);
+                    if (!query.isEmpty()) {
+                        if (!query.equals(lastSearchedQuery)) {
+                            if (searchRunnable != null) {
+                                searchHandler.removeCallbacks(searchRunnable);
+                            }
+                            performSearch(query);
+                        } else if (listFragment != null && listFragment.hasResults()) {
+                            return listFragment.focusFirstItem();
+                        }
+                    } else {
+                        showKeyboard(getContext(), searchText);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        });
 
         searchText.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH 
+                    || actionId == EditorInfo.IME_ACTION_DONE 
+                    || actionId == EditorInfo.IME_NULL) {
                 hideKeyboard(getContext(), searchText);
                 final String query = searchText.getText() != null ? searchText.getText().toString().trim() : "";
                 if (!query.isEmpty() && !query.equals(lastSearchedQuery)) {
@@ -164,6 +205,8 @@ public class SearchMoviesFragment extends Fragment {
                         searchHandler.removeCallbacks(searchRunnable);
                     }
                     performSearch(query);
+                } else if (listFragment != null && listFragment.hasResults()) {
+                    listFragment.focusFirstItem();
                 }
                 return true;
             }
@@ -207,6 +250,34 @@ public class SearchMoviesFragment extends Fragment {
                 searchHandler.postDelayed(searchRunnable, 350);
             }
         });
+
+        searchText.requestFocus();
+        showKeyboard(getContext(), searchText);
+    }
+
+    public boolean handleBackPressed() {
+        // If movie list or any child in the list has focus, return focus to search bar
+        if (listFragment != null && listFragment.getView() != null && listFragment.getView().hasFocus()) {
+            if (searchText != null) {
+                searchText.requestFocus();
+                return true;
+            }
+        }
+        // If search bar has text, clear text
+        if (searchText != null && searchText.getText() != null && searchText.getText().length() > 0) {
+            searchText.setText("");
+            searchText.requestFocus();
+            return true;
+        }
+        // If search bar is empty and not on sidebar, move to sidebar
+        if (getActivity() != null) {
+            View btnSearch = getActivity().findViewById(R.id.btn_search);
+            if (btnSearch != null && !btnSearch.hasFocus()) {
+                btnSearch.requestFocus();
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void showKeyboard(Context context, View view) {

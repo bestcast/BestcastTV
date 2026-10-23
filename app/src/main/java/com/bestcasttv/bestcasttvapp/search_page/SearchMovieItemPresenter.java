@@ -5,12 +5,15 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.Presenter;
 
 import com.bestcasttv.bestcasttvapp.R;
 import com.bestcasttv.bestcasttvapp.main_page.model.Movies;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 
 public class SearchMovieItemPresenter extends Presenter {
 
@@ -28,6 +31,12 @@ public class SearchMovieItemPresenter extends Presenter {
         }
 
         android.view.View view = LayoutInflater.from(context).inflate(R.layout.item_view, parent, false);
+        view.setFocusable(true);
+        view.setFocusableInTouchMode(true);
+        view.setBackground(ContextCompat.getDrawable(context, R.drawable.card_rounded_bg));
+        view.setClipToOutline(true);
+        view.setForeground(ContextCompat.getDrawable(context, R.drawable.movie_card_focus_outline));
+
         ViewGroup.LayoutParams params = view.getLayoutParams();
         if (params != null) {
             params.width = widthPx;
@@ -54,13 +63,17 @@ public class SearchMovieItemPresenter extends Presenter {
             url = contentMovies.getThumbnail();
         }
 
-        Glide.with(viewHolder.view.getContext())
+        Context context = viewHolder.view.getContext();
+        float density = context.getResources().getDisplayMetrics().density;
+        int radiusPx = Math.round(10 * density);
+
+        Glide.with(context)
                 .load(url)
                 .override(widthPx > 0 ? widthPx : 300, heightPx > 0 ? heightPx : 450)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .placeholder(R.drawable.default_portrate_large)
                 .error(R.drawable.default_portrate_large)
-                .centerCrop()
+                .transform(new CenterCrop(), new RoundedCorners(radiusPx))
                 .into(imageView);
     }
 
@@ -72,4 +85,3 @@ public class SearchMovieItemPresenter extends Presenter {
         }
     }
 }
-

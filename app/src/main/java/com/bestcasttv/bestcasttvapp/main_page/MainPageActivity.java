@@ -327,12 +327,21 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         if (SIDE_MENU && !CATEGORY_SIDE_MENU) {
             SIDE_MENU = false;
             closeMenu();
+            return;
         } else if (CATEGORY_SIDE_MENU) {
             CATEGORY_SIDE_MENU = false;
             closeCategoryMenu();
-        } else {
-            super.onBackPressed();
+            return;
         }
+
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.container);
+        if (currentFragment instanceof SearchMoviesFragment) {
+            if (((SearchMoviesFragment) currentFragment).handleBackPressed()) {
+                return;
+            }
+        }
+
+        super.onBackPressed();
     }
 
     public void openMenu() {
