@@ -5,7 +5,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#282828">
+        android:background="@android:color/black">
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline_top"
@@ -26,6 +26,7 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
             android:src="@drawable/default_landscape"
             app:layout_constraintDimensionRatio="16:9"
             app:layout_constraintEnd_toEndOf="parent"
@@ -33,17 +34,16 @@
             app:layout_constraintWidth_default="percent"
             app:layout_constraintWidth_percent=".7" />
 
-
         <View
             android:id="@+id/horizontal_gradient"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@drawable/banner_gradient"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@id/guideline_start"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_percent=".65" />
+            app:layout_constraintWidth_percent=".75" />
 
         <View
             android:id="@+id/vertical_gradient"
@@ -52,10 +52,9 @@
             android:background="@drawable/gradient_vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintHeight_default="percent"
-            app:layout_constraintHeight_percent=".7"
-            app:layout_constraintStart_toStartOf="@id/guideline_start"
-            />
+            app:layout_constraintHeight_percent=".7" />
 
         <TextView
             android:id="@+id/title"

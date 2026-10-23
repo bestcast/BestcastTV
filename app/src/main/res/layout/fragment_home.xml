@@ -29,11 +29,12 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent=".06" />
 
-    <!-- Hero Banner Image (16:9 proportion, anchored to top right) -->
+    <!-- Hero Banner Image (16:9 proportion, anchored to top right with subtle top margin) -->
     <ImageView
         android:id="@+id/img_banner"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
         android:src="@drawable/default_landscape"
@@ -49,20 +50,20 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent=".78"
+        app:layout_constraintWidth_percent=".75"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/guideline_center"
+        app:layout_constraintBottom_toBottomOf="@+id/img_banner"
         android:background="@drawable/banner_gradient" />
 
-    <!-- Pure Black Vertical Bottom Fade to seamlessly merge banner with rows below -->
+    <!-- Pure Black Vertical Bottom Fade to seamlessly merge banner with pure black rows below -->
     <View
         android:id="@+id/gradient_vertical"
         android:layout_width="0dp"
         android:layout_height="140dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/guideline_center"
+        app:layout_constraintBottom_toBottomOf="@+id/img_banner"
         android:background="@drawable/banner_bottom_gradient" />
 
     <!-- Hero Title -->
