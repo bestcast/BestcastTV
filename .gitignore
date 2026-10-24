@@ -27,6 +27,7 @@ gradle-app.setting
 
 # Local configuration file (SDK location, local keys, secrets)
 local.properties
+key.properties
 
 # Android Studio / IntelliJ IDEA
 .idea/
@@ -59,3 +60,4 @@ Thumbs.db
 webseries_api.docx
 webseries API Detail.docx
 screenshort
+imp_img.png

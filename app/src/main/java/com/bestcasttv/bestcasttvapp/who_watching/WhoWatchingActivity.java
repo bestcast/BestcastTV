@@ -74,7 +74,7 @@ public class WhoWatchingActivity extends FragmentActivity {
             appUtils.infoAlert(getString(R.string.check_network_connection));
         }
         whowatchingRecylclerview.setLayoutManager(new LinearLayoutManager(this));
-        whowatchingRecylclerview.setHasFixedSize(true);
+// whowatchingRecylclerview.setHasFixedSize(true);
 
 
     }

@@ -50,11 +50,12 @@
             android:exported="false" />
         <activity
             android:name=".LoginActivity"
-            android:exported="true"
+            android:exported="false"
             android:screenOrientation="landscape"
             android:windowSoftInputMode="stateVisible|adjustResize"/>
         <activity
             android:name=".SplashscreenActivity"
+            android:banner="@drawable/banner_bestcast"
             android:exported="true"
             android:screenOrientation="landscape">
             <intent-filter>
@@ -66,7 +67,7 @@
         <activity
             android:name=".MainActivity"
             android:banner="@drawable/banner_bestcast"
-            android:exported="true"
+            android:exported="false"
             android:icon="@drawable/icon_bestcast"
             android:label="@string/app_name"
             android:logo="@drawable/icon_bestcast"

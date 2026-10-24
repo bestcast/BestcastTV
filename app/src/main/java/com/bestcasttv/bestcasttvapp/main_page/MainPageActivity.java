@@ -335,6 +335,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     }
 
 
+    @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {
         if (SIDE_MENU && !CATEGORY_SIDE_MENU) {

@@ -129,7 +129,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/baseline_search_24"
-            android:tint="#555555" />
+            app:tint="#555555" />
 
         <TextView
             android:id="@+id/empty_text"
