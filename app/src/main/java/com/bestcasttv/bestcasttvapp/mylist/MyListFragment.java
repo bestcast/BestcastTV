@@ -277,6 +277,17 @@ public class MyListFragment extends Fragment {
                                     moviesMyListModel));
 
                             listFragment.bindData(moviesMainCategoryModelList);
+                        if (getView() != null) {
+                            getView().post(() -> {
+                                if (getActivity() instanceof com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) {
+                                    com.bestcasttv.bestcasttvapp.main_page.MainPageActivity act = (com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) getActivity();
+                                    if (act.isSideMenuOpen() || act.isFocusInNavBar()) {
+                                        return;
+                                    }
+                                }
+                                requestFocusOnContent();
+                            });
+                        }
                         }else {
                             getUsermoviesMylist(_token, profileID, "");
                         }
@@ -304,8 +315,19 @@ public class MyListFragment extends Fragment {
                 appUtils.showToast("Network error.");
             }
         });
+    }
 
-        loadingDialog.cancel();
+    public boolean requestFocusOnContent() {
+        if (listFragment != null && listFragment.hasItems()) {
+            listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (listFragment != null) {
+            listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (getView() != null) {
+            return getView().requestFocus();
+        }
+        return false;
     }
 
 }

@@ -153,6 +153,17 @@ public class WebSeriesFragment extends Fragment {
                 if (loadingDialog != null && getActivity() != null && !getActivity().isFinishing()) {
                     loadingDialog.cancel();
                 }
+                if (getView() != null) {
+                    getView().post(() -> {
+                        if (getActivity() instanceof com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) {
+                            com.bestcasttv.bestcasttvapp.main_page.MainPageActivity act = (com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) getActivity();
+                            if (act.isSideMenuOpen() || act.isFocusInNavBar()) {
+                                return;
+                            }
+                        }
+                        requestFocusOnContent();
+                    });
+                }
                 if (progressLoading != null) progressLoading.setVisibility(View.GONE);
 
                 if (response.isSuccessful() && response.body() != null) {
@@ -277,6 +288,19 @@ public class WebSeriesFragment extends Fragment {
                 .placeholder(imgBanner.getDrawable())
                 .error(R.drawable.default_landscape)
                 .into(imgBanner);
+    }
+
+    public boolean requestFocusOnContent() {
+        if (listFragment != null && listFragment.hasItems()) {
+            listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (listFragment != null) {
+            listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (getView() != null) {
+            return getView().requestFocus();
+        }
+        return false;
     }
 
     @Override

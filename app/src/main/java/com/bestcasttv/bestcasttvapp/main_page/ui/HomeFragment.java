@@ -193,6 +193,15 @@ public class HomeFragment extends Fragment {
             if (cachedBanner != null) {
                 applyBannerData(cachedBanner);
             }
+            view.post(() -> {
+                if (getActivity() instanceof com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) {
+                    com.bestcasttv.bestcasttvapp.main_page.MainPageActivity act = (com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) getActivity();
+                    if (act.isSideMenuOpen() || act.isFocusInNavBar()) {
+                        return;
+                    }
+                }
+                requestFocusOnContent();
+            });
         }
 
         String effectivePageId = (mPageId != null && !mPageId.isEmpty()) ? mPageId : "1";
@@ -271,10 +280,21 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    public void requestFocusOnContent() {
-        if (listFragment != null) {
+    public boolean requestFocusOnContent() {
+        if (listFragment != null && listFragment.hasItems()) {
             listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (btnHeroPlay != null && btnHeroPlay.getVisibility() == View.VISIBLE) {
+            return btnHeroPlay.requestFocus();
+        } else if (heroActionsLayout != null && heroActionsLayout.getVisibility() == View.VISIBLE) {
+            return heroActionsLayout.requestFocus();
+        } else if (listFragment != null && listFragment.getView() != null && listFragment.getView().getVisibility() == View.VISIBLE) {
+            listFragment.requestFocusOnFirstItem();
+            return true;
+        } else if (getView() != null) {
+            return getView().requestFocus();
         }
+        return false;
     }
 
     private void dismissLoading() {
@@ -282,6 +302,19 @@ public class HomeFragment extends Fragment {
             try {
                 loadingDialog.cancel();
             } catch (Exception ignored) {}
+        }
+        if (getView() != null) {
+            getView().post(() -> {
+                if (getActivity() != null && !getActivity().isFinishing()) {
+                    if (getActivity() instanceof com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) {
+                        com.bestcasttv.bestcasttvapp.main_page.MainPageActivity act = (com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) getActivity();
+                        if (act.isSideMenuOpen() || act.isFocusInNavBar()) {
+                            return;
+                        }
+                    }
+                    requestFocusOnContent();
+                }
+            });
         }
     }
 
@@ -627,6 +660,17 @@ public class HomeFragment extends Fragment {
 
                         if (listFragment != null) {
                             listFragment.bindData(moviesMainCategoryModelList);
+                            if (getView() != null) {
+                                getView().post(() -> {
+                                    if (getActivity() instanceof com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) {
+                                        com.bestcasttv.bestcasttvapp.main_page.MainPageActivity act = (com.bestcasttv.bestcasttvapp.main_page.MainPageActivity) getActivity();
+                                        if (act.isSideMenuOpen() || act.isFocusInNavBar()) {
+                                            return;
+                                        }
+                                    }
+                                    requestFocusOnContent();
+                                });
+                            }
                         }
 
                         if (emptyErrorLayout != null) {

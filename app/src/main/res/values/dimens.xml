@@ -5,4 +5,15 @@
     <dimen name="nav_header_vertical_spacing">8dp</dimen>
     <dimen name="nav_header_height">176dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Side Navigation Responsive Dimensions (Reduced expanded width by 30% for sleeker layout) -->
+    <dimen name="side_nav_width_collapsed">68dp</dimen>
+    <dimen name="side_nav_width_expanded">160dp</dimen>
+    <dimen name="side_nav_sub_width">155dp</dimen>
+    <dimen name="side_nav_item_height">46dp</dimen>
+    <dimen name="side_nav_profile_size">38dp</dimen>
+    <dimen name="side_nav_item_icon_padding">12dp</dimen>
+    <dimen name="side_nav_text_size">13sp</dimen>
+    <dimen name="side_nav_profile_text_size">13sp</dimen>
+    <dimen name="content_start_guideline">84dp</dimen>
 </resources>

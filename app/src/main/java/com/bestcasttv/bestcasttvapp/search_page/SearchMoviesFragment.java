@@ -280,6 +280,14 @@ public class SearchMoviesFragment extends Fragment {
         return false;
     }
 
+    public void requestFocusOnContent() {
+        if (searchText != null) {
+            searchText.requestFocus();
+        } else if (getView() != null) {
+            getView().requestFocus();
+        }
+    }
+
     public static void showKeyboard(Context context, View view) {
         if (context == null || view == null) return;
         view.requestFocus();

@@ -27,7 +27,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent=".07" />
+        app:layout_constraintGuide_begin="@dimen/content_start_guideline" />
 
     <ImageView
         android:id="@+id/img_banner"

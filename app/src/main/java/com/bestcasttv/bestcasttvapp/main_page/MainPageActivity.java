@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.BrowseFrameLayout;
 
 import android.annotation.SuppressLint;
+import android.graphics.Rect;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,6 +23,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.animation.ValueAnimator;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -57,6 +62,15 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     BrowseFrameLayout navBar;
     BrowseFrameLayout navCategoryBar;
     FrameLayout fragmentContainer;
+    View navScrimOverlay;
+    private ValueAnimator navBarAnimator;
+    private ValueAnimator navCategoryAnimator;
+    private int navCollapsedWidth;
+    private int navExpandedWidth;
+    private int navSubWidth;
+    private boolean isSwitchingFragment = false;
+    private boolean isDpadNavigatingToSearch = false;
+    private boolean isDpadNavigatingToSignOut = false;
     ImageView profileImage;
     TextView profileNameText;
     TextView btnSearch;
@@ -96,6 +110,32 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         fragmentContainer = findViewById(R.id.container);
         navBar = findViewById(R.id.blfNavBar);
         navCategoryBar = findViewById(R.id.blfSubNavBar);
+        navScrimOverlay = findViewById(R.id.navScrimOverlay);
+
+        navCollapsedWidth = getResources().getDimensionPixelSize(R.dimen.side_nav_width_collapsed);
+        navExpandedWidth = getResources().getDimensionPixelSize(R.dimen.side_nav_width_expanded);
+        navSubWidth = getResources().getDimensionPixelSize(R.dimen.side_nav_sub_width);
+
+        if (navBar != null) {
+            navBar.getLayoutParams().width = navCollapsedWidth;
+            navBar.requestLayout();
+        }
+        if (navCategoryBar != null) {
+            navCategoryBar.getLayoutParams().width = 0;
+            navCategoryBar.requestLayout();
+        }
+        if (navScrimOverlay != null) {
+            navScrimOverlay.setVisibility(View.GONE);
+            navScrimOverlay.setAlpha(0f);
+            navScrimOverlay.setOnClickListener(v -> {
+                if (CATEGORY_SIDE_MENU) {
+                    closeCategoryMenu();
+                }
+                if (SIDE_MENU) {
+                    closeMenu();
+                }
+            });
+        }
 
         profileImage = findViewById(R.id.profileImage);
         profileNameText = findViewById(R.id.profileName);
@@ -117,21 +157,92 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         btnMyist.setOnKeyListener(this);
         signOutBtTextView.setOnKeyListener(this);
 
-        View.OnFocusChangeListener menuFocusListener = (v, hasFocus) -> {
+        navBar.setOnFocusSearchListener((focused, direction) -> {
+            if (direction == View.FOCUS_RIGHT) {
+                if (fragmentContainer != null) {
+                    return fragmentContainer;
+                }
+            }
+            if (focused == null || focused == navBar || !isNavMenuItem(focused)) {
+                View target = getSelectedMenuView();
+                if (target != null) {
+                    return target;
+                }
+            }
+            return null;
+        });
+
+        navBar.setOnChildFocusListener(new BrowseFrameLayout.OnChildFocusListener() {
+            @Override
+            public boolean onRequestFocusInDescendants(int direction, Rect previouslyFocusedRect) {
+                View target = getSelectedMenuView();
+                if (target != null) {
+                    target.requestFocus();
+                    return true;
+                }
+                return true;
+            }
+
+            @Override
+            public void onRequestChildFocus(View child, View focused) {
+            }
+        });
+
+        btnSearch.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
-                    openMenu();
-                    SIDE_MENU = true;
+                if (!Constants.MENU_SEARCH.equals(selectedMenu) && !isDpadNavigatingToSearch) {
+                    View target = getSelectedMenuView();
+                    if (target != null && target != btnSearch) {
+                        target.requestFocus();
+                        return;
+                    }
+                }
+                isDpadNavigatingToSearch = false;
+                if (!isSwitchingFragment) {
+                    if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
+                        openMenu();
+                        SIDE_MENU = true;
+                    }
+                }
+            }
+        });
+
+        View.OnFocusChangeListener standardMenuFocusListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                isDpadNavigatingToSearch = false;
+                isDpadNavigatingToSignOut = false;
+                if (!isSwitchingFragment) {
+                    if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
+                        openMenu();
+                        SIDE_MENU = true;
+                    }
                 }
             }
         };
-        btnSearch.setOnFocusChangeListener(menuFocusListener);
-        btnHome.setOnFocusChangeListener(menuFocusListener);
-        btnMovie.setOnFocusChangeListener(menuFocusListener);
-        if (btnWebseries != null) btnWebseries.setOnFocusChangeListener(menuFocusListener);
-        btnCategory.setOnFocusChangeListener(menuFocusListener);
-        btnMyist.setOnFocusChangeListener(menuFocusListener);
-        signOutBtTextView.setOnFocusChangeListener(menuFocusListener);
+        btnHome.setOnFocusChangeListener(standardMenuFocusListener);
+        btnMovie.setOnFocusChangeListener(standardMenuFocusListener);
+        if (btnWebseries != null) btnWebseries.setOnFocusChangeListener(standardMenuFocusListener);
+        btnCategory.setOnFocusChangeListener(standardMenuFocusListener);
+        btnMyist.setOnFocusChangeListener(standardMenuFocusListener);
+
+        signOutBtTextView.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                if (!Constants.MENU_SIGNOUT.equals(selectedMenu) && !isDpadNavigatingToSignOut) {
+                    View target = getSelectedMenuView();
+                    if (target != null && target != signOutBtTextView) {
+                        target.requestFocus();
+                        return;
+                    }
+                }
+                isDpadNavigatingToSignOut = false;
+                if (!isSwitchingFragment) {
+                    if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
+                        openMenu();
+                        SIDE_MENU = true;
+                    }
+                }
+            }
+        });
 
         View.OnClickListener menuClickListener = this::handleMenuClick;
         btnSearch.setOnClickListener(menuClickListener);
@@ -165,8 +276,11 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
                 .load(profilePicture)
                 .placeholder(R.drawable.default_profile)
                 .error(R.drawable.default_profile)
+                .circleCrop()
                 .into(profileImage);
         profileNameText.setText(profileName);
+        profileNameText.setVisibility(View.GONE);
+        profileNameText.setAlpha(0f);
 
         getCategoryList(_token);
 
@@ -174,13 +288,35 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     }
 
     public void changeFragment(Fragment fragment) {
-        closeMenu();
+        isSwitchingFragment = true;
         closeCategoryMenu();
+        if (fragmentContainer != null) {
+            fragmentContainer.setTranslationX(0f);
+        }
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.container, fragment);
-        transaction.commit();
+        transaction.commitAllowingStateLoss();
 
+        View target = getSelectedMenuView();
+        if (target != null) {
+            target.requestFocus();
+        }
+
+        if (fragmentContainer != null) {
+            fragmentContainer.postDelayed(() -> {
+                isSwitchingFragment = false;
+                if (SIDE_MENU || CATEGORY_SIDE_MENU || isFocusInNavBar()) {
+                    View menuTarget = getSelectedMenuView();
+                    if (menuTarget != null) {
+                        menuTarget.requestFocus();
+                    }
+                }
+            }, 150);
+        } else {
+            isSwitchingFragment = false;
+        }
     }
 
     private void handleMenuClick(View view) {
@@ -189,6 +325,7 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
         }
         view.setActivated(true);
         lastSelectedMenu = view;
+        view.requestFocus();
 
         int itemId = view.getId();
 
@@ -253,54 +390,80 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     @Override
     public boolean onKey(View view, int keyCode, KeyEvent event) {
 
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_CENTER:
-            case KeyEvent.KEYCODE_ENTER:
-                handleMenuClick(view);
-                break;
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
-                    switchToLastSelectedMenu();
-                    openMenu();
-                    SIDE_MENU = true;
-                } else if (CATEGORY_SIDE_MENU) {
-                    CATEGORY_SIDE_MENU = false;
-                    closeCategoryMenu();
-                }
-                break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (SIDE_MENU && CATEGORY_SIDE_MENU) {
-                    navCategoryBar.requestFocus();
-                }
-                break;
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (view == btnHome && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                isDpadNavigatingToSearch = true;
+            } else if (view == btnSearch && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                isDpadNavigatingToSearch = false;
+            } else if (view == btnMyist && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                isDpadNavigatingToSignOut = true;
+            } else if (view == signOutBtTextView && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                isDpadNavigatingToSignOut = false;
+            }
+
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                case KeyEvent.KEYCODE_ENTER:
+                    handleMenuClick(view);
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if (!SIDE_MENU && !CATEGORY_SIDE_MENU) {
+                        switchToLastSelectedMenu();
+                        openMenu();
+                        return true;
+                    } else if (CATEGORY_SIDE_MENU) {
+                        closeCategoryMenu();
+                        if (btnCategory != null) {
+                            btnCategory.requestFocus();
+                        }
+                        return true;
+                    }
+                    break;
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if (SIDE_MENU && CATEGORY_SIDE_MENU) {
+                        if (categoryListView != null) {
+                            categoryListView.requestFocus();
+                            categoryListView.setSelection(0);
+                        }
+                        return true;
+                    } else if (SIDE_MENU) {
+                        closeMenu();
+                        returnFocusToContent();
+                        return true;
+                    }
+                    break;
+            }
         }
         return false;
     }
 
 
-    public void switchToLastSelectedMenu() {
+    public View getSelectedMenuView() {
+        if (selectedMenu == null) return btnHome;
         switch (selectedMenu) {
             case Constants.MENU_SEARCH:
-                btnSearch.requestFocus();
-                break;
+                return btnSearch;
             case Constants.MENU_HOME:
-                btnHome.requestFocus();
-                break;
+                return btnHome;
             case Constants.MENU_MOVIE:
-                btnMovie.requestFocus();
-                break;
+                return btnMovie;
             case Constants.MENU_WEBSERIES:
-                if (btnWebseries != null) btnWebseries.requestFocus();
-                break;
+                return btnWebseries != null ? btnWebseries : btnHome;
             case Constants.MENU_CATEGORY:
-                btnCategory.requestFocus();
-                break;
+                return btnCategory;
             case Constants.MENU_MYLIST:
-                btnMyist.requestFocus();
-                break;
+                return btnMyist;
             case Constants.MENU_SIGNOUT:
-                signOutBtTextView.requestFocus();
-                break;
+                return signOutBtTextView;
+            default:
+                return lastSelectedMenu != null ? lastSelectedMenu : btnHome;
+        }
+    }
+
+    public void switchToLastSelectedMenu() {
+        View target = getSelectedMenuView();
+        if (target != null) {
+            target.requestFocus();
         }
     }
 
@@ -308,21 +471,16 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && SIDE_MENU && !CATEGORY_SIDE_MENU) {
-            SIDE_MENU = false;
             closeMenu();
             return true;
         }
 
         if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && CATEGORY_SIDE_MENU) {
-            closeCategoryMenu();
-            closeMenu();
-            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
-            if (fragment instanceof HomeFragment) {
-                ((HomeFragment) fragment).requestFocusOnContent();
-            } else {
-                fragmentContainer.requestFocus();
+            if (categoryListView != null && !categoryListView.hasFocus()) {
+                categoryListView.requestFocus();
+                categoryListView.setSelection(0);
+                return true;
             }
-            return true;
         }
 
         return super.onKeyDown(keyCode, event);
@@ -338,13 +496,14 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {
-        if (SIDE_MENU && !CATEGORY_SIDE_MENU) {
-            SIDE_MENU = false;
-            closeMenu();
-            return;
-        } else if (CATEGORY_SIDE_MENU) {
-            CATEGORY_SIDE_MENU = false;
+        if (CATEGORY_SIDE_MENU) {
             closeCategoryMenu();
+            if (btnCategory != null) {
+                btnCategory.requestFocus();
+            }
+            return;
+        } else if (SIDE_MENU) {
+            closeMenu();
             return;
         }
 
@@ -370,41 +529,243 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
     }
 
     public void openMenu() {
-        Animation animSlide = AnimationUtils.loadAnimation(this, R.anim.slide_in_left);
-        navBar.startAnimation(animSlide);
+        if (SIDE_MENU) return;
+        SIDE_MENU = true;
 
-        navBar.requestLayout();
-        navBar.getLayoutParams().width = Common.getWidthInPercent(this, 16);
+        // Hide keyboard if open (e.g. from Search page)
+        View currentFocus = getCurrentFocus();
+        if (currentFocus != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+            }
+        }
+
+        if (navBarAnimator != null && navBarAnimator.isRunning()) {
+            navBarAnimator.cancel();
+        }
+
+        int currentWidth = (navBar.getWidth() > 0) ? navBar.getWidth() : navCollapsedWidth;
+        int targetWidth = navExpandedWidth;
+        int shiftDelta = targetWidth - navCollapsedWidth;
+        float currentTransX = fragmentContainer != null ? fragmentContainer.getTranslationX() : 0f;
+
+        navBarAnimator = ValueAnimator.ofFloat(0f, 1f);
+        navBarAnimator.setDuration(220);
+        navBarAnimator.setInterpolator(new DecelerateInterpolator());
+        navBarAnimator.addUpdateListener(animation -> {
+            float fraction = (float) animation.getAnimatedValue();
+            int width = (int) (currentWidth + (targetWidth - currentWidth) * fraction);
+            ViewGroup.LayoutParams lp = navBar.getLayoutParams();
+            if (lp != null) {
+                lp.width = width;
+                navBar.setLayoutParams(lp);
+            }
+            if (fragmentContainer != null) {
+                fragmentContainer.setTranslationX(currentTransX + (shiftDelta - currentTransX) * fraction);
+            }
+        });
+        navBarAnimator.start();
+
+        if (navScrimOverlay != null) {
+            navScrimOverlay.setVisibility(View.VISIBLE);
+            navScrimOverlay.animate().alpha(1.0f).setDuration(220).start();
+        }
+
+        if (profileNameText != null) {
+            profileNameText.setVisibility(View.VISIBLE);
+            profileNameText.animate().alpha(1.0f).setDuration(220).start();
+        }
     }
 
     public void closeMenu() {
-        navBar.requestLayout();
-        navBar.getLayoutParams().width = Common.getWidthInPercent(this, 5);
-
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
-        if (fragment instanceof HomeFragment) {
-            ((HomeFragment) fragment).requestFocusOnContent();
-        } else {
-            fragmentContainer.requestFocus();
-        }
+        if (!SIDE_MENU && (navBar.getWidth() <= navCollapsedWidth)) return;
         SIDE_MENU = false;
+
+        if (navBarAnimator != null && navBarAnimator.isRunning()) {
+            navBarAnimator.cancel();
+        }
+
+        int currentWidth = (navBar.getWidth() > 0) ? navBar.getWidth() : navExpandedWidth;
+        int targetWidth = navCollapsedWidth;
+        float currentTransX = fragmentContainer != null ? fragmentContainer.getTranslationX() : 0f;
+
+        navBarAnimator = ValueAnimator.ofFloat(0f, 1f);
+        navBarAnimator.setDuration(200);
+        navBarAnimator.setInterpolator(new DecelerateInterpolator());
+        navBarAnimator.addUpdateListener(animation -> {
+            float fraction = (float) animation.getAnimatedValue();
+            int width = (int) (currentWidth + (targetWidth - currentWidth) * fraction);
+            ViewGroup.LayoutParams lp = navBar.getLayoutParams();
+            if (lp != null) {
+                lp.width = width;
+                navBar.setLayoutParams(lp);
+            }
+            if (fragmentContainer != null) {
+                fragmentContainer.setTranslationX(currentTransX * (1f - fraction));
+            }
+        });
+        navBarAnimator.start();
+
+        if (profileNameText != null) {
+            profileNameText.animate().alpha(0.0f).setDuration(150).withEndAction(() -> {
+                if (!SIDE_MENU && profileNameText != null) {
+                    profileNameText.setVisibility(View.GONE);
+                }
+            }).start();
+        }
+
+        if (navScrimOverlay != null && !CATEGORY_SIDE_MENU) {
+            navScrimOverlay.animate().alpha(0.0f).setDuration(180).withEndAction(() -> {
+                if (!SIDE_MENU && !CATEGORY_SIDE_MENU && navScrimOverlay != null) {
+                    navScrimOverlay.setVisibility(View.GONE);
+                }
+            }).start();
+        }
+
+        if (!isSwitchingFragment) {
+            returnFocusToContent();
+        }
     }
 
     public void openCategoryMenu() {
-        Animation animSlide = AnimationUtils.loadAnimation(this, R.anim.slide_in_left);
-        navCategoryBar.startAnimation(animSlide);
-        navCategoryBar.requestLayout();
-        navCategoryBar.getLayoutParams().width = Common.getWidthInPercent(this, 20);
+        if (CATEGORY_SIDE_MENU) return;
+        CATEGORY_SIDE_MENU = true;
 
+        if (navCategoryAnimator != null && navCategoryAnimator.isRunning()) {
+            navCategoryAnimator.cancel();
+        }
+
+        int currentWidth = navCategoryBar.getWidth();
+        int baseShift = navExpandedWidth - navCollapsedWidth;
+        float currentTransX = fragmentContainer != null ? fragmentContainer.getTranslationX() : baseShift;
+        float targetTransX = baseShift + navSubWidth;
+
+        navCategoryAnimator = ValueAnimator.ofFloat(0f, 1f);
+        navCategoryAnimator.setDuration(220);
+        navCategoryAnimator.setInterpolator(new DecelerateInterpolator());
+        navCategoryAnimator.addUpdateListener(animation -> {
+            float fraction = (float) animation.getAnimatedValue();
+            int width = (int) (currentWidth + (navSubWidth - currentWidth) * fraction);
+            ViewGroup.LayoutParams lp = navCategoryBar.getLayoutParams();
+            if (lp != null) {
+                lp.width = width;
+                navCategoryBar.setLayoutParams(lp);
+            }
+            if (fragmentContainer != null) {
+                fragmentContainer.setTranslationX(currentTransX + (targetTransX - currentTransX) * fraction);
+            }
+        });
+        navCategoryAnimator.start();
+
+        if (navScrimOverlay != null) {
+            navScrimOverlay.setVisibility(View.VISIBLE);
+            navScrimOverlay.animate().alpha(1.0f).setDuration(220).start();
+        }
     }
 
     public void closeCategoryMenu() {
-        navCategoryBar.requestLayout();
-        navCategoryBar.getLayoutParams().width = Common.getWidthInPercent(this, 0);
-
-        fragmentContainer.requestFocus();
+        if (!CATEGORY_SIDE_MENU && navCategoryBar.getWidth() == 0) return;
         CATEGORY_SIDE_MENU = false;
 
+        if (navCategoryAnimator != null && navCategoryAnimator.isRunning()) {
+            navCategoryAnimator.cancel();
+        }
+
+        int currentWidth = navCategoryBar.getWidth();
+        int targetShift = SIDE_MENU ? (navExpandedWidth - navCollapsedWidth) : 0;
+        float currentTransX = fragmentContainer != null ? fragmentContainer.getTranslationX() : targetShift;
+
+        navCategoryAnimator = ValueAnimator.ofFloat(0f, 1f);
+        navCategoryAnimator.setDuration(180);
+        navCategoryAnimator.setInterpolator(new DecelerateInterpolator());
+        navCategoryAnimator.addUpdateListener(animation -> {
+            float fraction = (float) animation.getAnimatedValue();
+            int width = (int) (currentWidth * (1f - fraction));
+            ViewGroup.LayoutParams lp = navCategoryBar.getLayoutParams();
+            if (lp != null) {
+                lp.width = width;
+                navCategoryBar.setLayoutParams(lp);
+            }
+            if (fragmentContainer != null) {
+                fragmentContainer.setTranslationX(currentTransX + (targetShift - currentTransX) * fraction);
+            }
+        });
+        navCategoryAnimator.start();
+
+        if (navScrimOverlay != null && !SIDE_MENU) {
+            navScrimOverlay.animate().alpha(0.0f).setDuration(180).withEndAction(() -> {
+                if (!SIDE_MENU && !CATEGORY_SIDE_MENU && navScrimOverlay != null) {
+                    navScrimOverlay.setVisibility(View.GONE);
+                }
+            }).start();
+        }
+    }
+
+    public void returnFocusToContent() {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+        boolean focused = false;
+        if (fragment instanceof HomeFragment) {
+            focused = ((HomeFragment) fragment).requestFocusOnContent();
+        } else if (fragment instanceof com.bestcasttv.bestcasttvapp.webseries.ui.WebSeriesFragment) {
+            focused = ((com.bestcasttv.bestcasttvapp.webseries.ui.WebSeriesFragment) fragment).requestFocusOnContent();
+        } else if (fragment instanceof com.bestcasttv.bestcasttvapp.mylist.MyListFragment) {
+            focused = ((com.bestcasttv.bestcasttvapp.mylist.MyListFragment) fragment).requestFocusOnContent();
+        } else if (fragment instanceof SearchMoviesFragment) {
+            ((SearchMoviesFragment) fragment).requestFocusOnContent();
+            focused = true;
+        } else if (fragment != null && fragment.getView() != null) {
+            focused = fragment.getView().requestFocus();
+        }
+        if (!focused) {
+            View target = getSelectedMenuView();
+            if (target != null) {
+                target.requestFocus();
+            }
+        }
+    }
+
+    public boolean isSideMenuOpen() {
+        return SIDE_MENU || CATEGORY_SIDE_MENU;
+    }
+
+    public boolean isFocusInNavBar() {
+        View current = getCurrentFocus();
+        return isNavMenuItem(current);
+    }
+
+    public boolean isNavMenuItem(View view) {
+        if (view == null) return false;
+        int id = view.getId();
+        return id == R.id.btn_search || id == R.id.btn_home || id == R.id.btn_movies
+                || id == R.id.btn_webseries || id == R.id.btn_category || id == R.id.btn_mylist
+                || id == R.id.signOutBT;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            View currentFocus = getCurrentFocus();
+            if (currentFocus == null || !isNavMenuItem(currentFocus)) {
+                if (SIDE_MENU || CATEGORY_SIDE_MENU) {
+                    View target = getSelectedMenuView();
+                    if (target != null) {
+                        target.requestFocus();
+                    }
+                }
+            } else if (currentFocus == btnSearch && !Constants.MENU_SEARCH.equals(selectedMenu)) {
+                View target = getSelectedMenuView();
+                if (target != null) {
+                    target.requestFocus();
+                }
+            } else if (currentFocus == signOutBtTextView && !Constants.MENU_SIGNOUT.equals(selectedMenu)) {
+                View target = getSelectedMenuView();
+                if (target != null) {
+                    target.requestFocus();
+                }
+            }
+        }
     }
 
     public void signoutAlert() {
@@ -478,6 +839,10 @@ public class MainPageActivity extends FragmentActivity implements View.OnKeyList
                                             if (btnCategory != null) {
                                                 btnCategory.requestFocus();
                                             }
+                                            return true;
+                                        case KeyEvent.KEYCODE_DPAD_RIGHT:
+                                            closeCategoryMenu();
+                                            closeMenu();
                                             return true;
                                         case KeyEvent.KEYCODE_DPAD_UP:
                                             if (selectedPosition > 0) {

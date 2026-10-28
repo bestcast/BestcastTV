@@ -21,13 +21,13 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent=".07" />
 
-    <!-- Safe-zone Left Guideline: 6% for overscan protection on all TV panels -->
+    <!-- Safe-zone Left Guideline: cleanly aligned with navigation rail -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent=".06" />
+        app:layout_constraintGuide_begin="@dimen/content_start_guideline" />
 
     <!-- Hero Banner Image (16:9 proportion, anchored to top right with subtle top margin) -->
     <ImageView

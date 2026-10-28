@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:state_activated="true" android:drawable="@drawable/nav_item_focused_activated" />
+    <item android:state_focused="true" android:drawable="@drawable/nav_item_focused" />
+    <item android:state_activated="true" android:drawable="@drawable/nav_item_activated" />
+    <item android:drawable="@android:color/transparent" />
+</selector>

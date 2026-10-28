@@ -71,11 +71,13 @@ public class ListRowFragment extends RowsSupportFragment {
                     if (next != null && next != focused) {
                         return next;
                     }
-                    if (getActivity() != null) {
-                        View sidebar = getActivity().findViewById(R.id.btn_home);
-                        if (sidebar == null || !sidebar.isShown()) {
-                            sidebar = getActivity().findViewById(R.id.btn_movies);
+                    if (getActivity() instanceof MainPageActivity) {
+                        View target = ((MainPageActivity) getActivity()).getSelectedMenuView();
+                        if (target != null && target.isShown()) {
+                            return target;
                         }
+                    } else if (getActivity() != null) {
+                        View sidebar = getActivity().findViewById(R.id.btn_home);
                         if (sidebar != null && sidebar.isShown()) {
                             return sidebar;
                         }
@@ -172,6 +174,11 @@ public class ListRowFragment extends RowsSupportFragment {
                 }
             }
         }
+    }
+
+    public boolean hasItems() {
+        VerticalGridView gridView = getVerticalGridView();
+        return gridView != null && gridView.getChildCount() > 0;
     }
 
     public void requestFocusOnFirstItem() {

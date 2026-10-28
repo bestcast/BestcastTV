@@ -129,4 +129,18 @@ public class WebSeriesListRowFragment extends RowsSupportFragment {
             }
         }
     }
+
+    public boolean hasItems() {
+        androidx.leanback.widget.VerticalGridView gridView = getVerticalGridView();
+        return gridView != null && gridView.getChildCount() > 0;
+    }
+
+    public void requestFocusOnFirstItem() {
+        androidx.leanback.widget.VerticalGridView gridView = getVerticalGridView();
+        if (gridView != null && gridView.getChildCount() > 0) {
+            gridView.requestFocus();
+        } else if (getView() != null) {
+            getView().requestFocus();
+        }
+    }
 }
