@@ -13,15 +13,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent=".45" />
+        app:layout_constraintGuide_percent=".48" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="40dp" />
+        app:layout_constraintGuide_percent=".07" />
 
+    <!-- Safe-zone Left Guideline: cleanly aligned with navigation rail -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_start"
         android:layout_width="wrap_content"
@@ -29,17 +30,20 @@
         android:orientation="vertical"
         app:layout_constraintGuide_begin="@dimen/content_start_guideline" />
 
+    <!-- Hero Banner Image (16:9 proportion, anchored to top right with subtle top margin) -->
     <ImageView
         android:id="@+id/img_banner"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
         android:src="@drawable/default_landscape"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent=".62" />
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent=".68" />
 
     <ProgressBar
         android:id="@+id/progress_loading_webseries"
@@ -53,71 +57,175 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Pure Black Horizontal Gradient Overlay to blend banner text smoothly into pure black -->
     <View
         android:id="@+id/gradient_horizontal"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/banner_gradient"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent=".75"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent=".75" />
+        app:layout_constraintBottom_toBottomOf="@+id/img_banner"
+        android:background="@drawable/banner_gradient" />
+
+    <!-- Pure Black Vertical Bottom Fade to seamlessly merge banner with pure black rows below -->
+    <View
+        android:id="@+id/gradient_vertical"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@drawable/banner_bottom_gradient" />
 
     <!-- Hero Title -->
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Web Series"
-        android:textColor="@android:color/white"
-        android:textSize="34sp"
+        android:text=""
+        tools:text="Bestcast Series"
+        android:textSize="32sp"
         android:textStyle="bold"
+        android:textColor="#FFFFFF"
         android:maxLines="2"
         android:ellipsize="end"
         android:includeFontPadding="false"
-        app:layout_constraintStart_toStartOf="@+id/guideline_start"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent=".46"
         app:layout_constraintTop_toTopOf="@+id/guideline_top"
-        app:layout_constraintWidth_percent=".52" />
+        app:layout_constraintStart_toStartOf="@+id/guideline_start" />
 
-    <!-- Subtitle (Certificate • Year) -->
+    <!-- Hero Subtitle (Certificate • Year • Seasons) -->
     <TextView
         android:id="@+id/subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#BBBBBB"
+        android:text=""
+        tools:text="2024 • U/A 16+ • 1 Season"
         android:textSize="14sp"
+        android:textColor="#CCCCCC"
+        android:layout_marginTop="6dp"
         android:includeFontPadding="false"
-        app:layout_constraintStart_toStartOf="@+id/guideline_start"
-        app:layout_constraintTop_toBottomOf="@+id/title" />
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintStart_toStartOf="@+id/guideline_start" />
 
-    <!-- Description -->
+    <!-- Hero Description -->
     <TextView
         android:id="@+id/description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:lineSpacingMultiplier="1.2"
-        android:maxLines="3"
-        android:ellipsize="end"
-        android:textColor="#CCCCCC"
+        android:text=""
+        tools:text="Web Series summary description goes here."
         android:textSize="13sp"
+        android:textColor="#DDDDDD"
+        android:layout_marginTop="8dp"
+        android:maxLines="3"
+        android:lineSpacingMultiplier="1.2"
+        android:ellipsize="end"
         android:includeFontPadding="false"
-        app:layout_constraintStart_toStartOf="@+id/guideline_start"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent=".44"
         app:layout_constraintTop_toBottomOf="@+id/subtitle"
-        app:layout_constraintWidth_percent=".50" />
+        app:layout_constraintStart_toStartOf="@+id/guideline_start" />
 
-    <!-- List Fragment container for RowsSupportFragment -->
+    <!-- Hero Banner Interactive Actions -->
+    <LinearLayout
+        android:id="@+id/hero_actions_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:nextFocusDown="@id/list_fragment"
+        app:layout_constraintTop_toBottomOf="@+id/description"
+        app:layout_constraintStart_toStartOf="@+id/guideline_start">
+
+        <TextView
+            android:id="@+id/btn_hero_play"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true"
+            android:text="▶  Watch Now"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/hero_btn_text_color"
+            android:background="@drawable/hero_btn_selector"
+            android:nextFocusRight="@+id/btn_hero_details"
+            android:nextFocusDown="@id/list_fragment" />
+
+        <TextView
+            android:id="@+id/btn_hero_details"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginStart="12dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true"
+            android:text="ℹ  More Info"
+            android:textSize="13sp"
+            android:textColor="@color/hero_btn_text_color"
+            android:background="@drawable/hero_btn_selector"
+            android:nextFocusLeft="@+id/btn_hero_play"
+            android:nextFocusDown="@id/list_fragment" />
+
+    </LinearLayout>
+
+    <!-- Content Rows Fragment Container (Cleanly aligned with guideline_start for unified TV visual grid) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/list_fragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="84dp"
+        android:nextFocusUp="@id/btn_hero_play"
         android:clipChildren="false"
         android:clipToPadding="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline_start"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline_center"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Empty / Error Retry Layout -->
+    <LinearLayout
+        android:id="@+id/empty_error_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/guideline_center"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline_center" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/error_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No web series available at this moment."
+            android:textColor="#AAAAAA"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="12dp"
+            android:text="Retry"
+            android:textAllCaps="false"
+            android:textSize="13sp"
+            android:textColor="@android:color/white"
+            android:background="@drawable/hero_btn_selector"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:focusable="true" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,7 +10,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -55,6 +57,13 @@ public class WebSeriesFragment extends Fragment {
     private ImageView imgBanner;
     private ProgressBar progressLoading;
 
+    private LinearLayout heroActionsLayout;
+    private TextView btnHeroPlay;
+    private TextView btnHeroDetails;
+
+    private LinearLayout emptyErrorLayout;
+    private Button btnRetry;
+
     private WebSeriesListRowFragment listFragment;
     private AppUtils appUtils;
     private LoadingDialog loadingDialog;
@@ -94,12 +103,39 @@ public class WebSeriesFragment extends Fragment {
         imgBanner = view.findViewById(R.id.img_banner);
         progressLoading = view.findViewById(R.id.progress_loading_webseries);
 
+        heroActionsLayout = view.findViewById(R.id.hero_actions_layout);
+        btnHeroPlay = view.findViewById(R.id.btn_hero_play);
+        btnHeroDetails = view.findViewById(R.id.btn_hero_details);
+
+        emptyErrorLayout = view.findViewById(R.id.empty_error_layout);
+        btnRetry = view.findViewById(R.id.btn_retry);
+
+        View.OnClickListener actionClickListener = v -> {
+            WebSeriesModel target = sCachedSelectedSeries != null ? sCachedSelectedSeries : findFirstSeries(sCachedBlockList);
+            if (target != null && target.getId() != null && getContext() != null) {
+                Intent intent = new Intent(getContext(), WebSeriesDetailsActivity.class);
+                intent.putExtra("webseries_id", target.getId());
+                intent.putExtra("webseries_data", target);
+                startActivity(intent);
+            }
+        };
+
+        if (btnHeroPlay != null) btnHeroPlay.setOnClickListener(actionClickListener);
+        if (btnHeroDetails != null) btnHeroDetails.setOnClickListener(actionClickListener);
+
+        if (btnRetry != null) {
+            btnRetry.setOnClickListener(v -> {
+                if (emptyErrorLayout != null) emptyErrorLayout.setVisibility(View.GONE);
+                loadWebSeriesBlocks();
+            });
+        }
+
         listFragment = new WebSeriesListRowFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
         transaction.replace(R.id.list_fragment, listFragment);
         transaction.commit();
 
-        listFragment.setOnContentSelectedListener(series -> updateBanner(series));
+        listFragment.setOnContentSelectedListener(this::updateBanner);
         listFragment.setOnItemClickListener(series -> {
             if (series == null || series.getId() == null) return;
             Intent intent = new Intent(getContext(), WebSeriesDetailsActivity.class);
@@ -181,19 +217,30 @@ public class WebSeriesFragment extends Fragment {
                                 if (listFragment != null) {
                                     listFragment.bindData(blockList);
                                 }
+                                if (emptyErrorLayout != null) emptyErrorLayout.setVisibility(View.GONE);
                                 if (sCachedSelectedSeries == null) {
                                     WebSeriesModel initialSeries = findFirstSeries(blockList);
                                     if (initialSeries != null) {
                                         updateBannerImmediate(initialSeries);
                                     }
                                 }
+                            } else {
+                                if (emptyErrorLayout != null) emptyErrorLayout.setVisibility(View.VISIBLE);
                             }
+                        } else {
+                            if (emptyErrorLayout != null) emptyErrorLayout.setVisibility(View.VISIBLE);
                         }
                     } catch (Exception e) {
                         Log.e("WebSeriesFragment", "Error parsing blocks", e);
+                        if (emptyErrorLayout != null && (sCachedBlockList == null || sCachedBlockList.isEmpty())) {
+                            emptyErrorLayout.setVisibility(View.VISIBLE);
+                        }
                     }
                 } else {
                     if (appUtils != null && !hasCache) appUtils.showToast("Failed to load Web Series");
+                    if (emptyErrorLayout != null && (sCachedBlockList == null || sCachedBlockList.isEmpty())) {
+                        emptyErrorLayout.setVisibility(View.VISIBLE);
+                    }
                 }
             }
 
@@ -205,6 +252,9 @@ public class WebSeriesFragment extends Fragment {
                 if (progressLoading != null) progressLoading.setVisibility(View.GONE);
                 Log.e("WebSeriesFragment", "Network error", t);
                 if (appUtils != null && !hasCache) appUtils.showToast("Network error.");
+                if (emptyErrorLayout != null && (sCachedBlockList == null || sCachedBlockList.isEmpty())) {
+                    emptyErrorLayout.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
@@ -251,11 +301,22 @@ public class WebSeriesFragment extends Fragment {
                 if (subtitle.length() > 0) subtitle.append(" • ");
                 subtitle.append(series.getYear().trim());
             }
+            if (series.getSeasons() != null && !series.getSeasons().isEmpty()) {
+                int count = series.getSeasons().size();
+                if (subtitle.length() > 0) subtitle.append(" • ");
+                subtitle.append(count).append(count > 1 ? " Seasons" : " Season");
+            } else if (series.getDuration() != null && !series.getDuration().trim().isEmpty()) {
+                if (subtitle.length() > 0) subtitle.append(" • ");
+                subtitle.append(series.getDuration().trim());
+            }
             txtSubTitle.setText(subtitle.toString());
         }
 
         if (txtDescription != null) {
             String content = series.getContent();
+            if (content == null || content.trim().isEmpty()) {
+                content = series.getTagText();
+            }
             if (content != null) {
                 content = content.replaceAll("<[^>]*>", "").trim();
             }
@@ -294,6 +355,10 @@ public class WebSeriesFragment extends Fragment {
         if (listFragment != null && listFragment.hasItems()) {
             listFragment.requestFocusOnFirstItem();
             return true;
+        } else if (btnHeroPlay != null && btnHeroPlay.getVisibility() == View.VISIBLE) {
+            return btnHeroPlay.requestFocus();
+        } else if (heroActionsLayout != null && heroActionsLayout.getVisibility() == View.VISIBLE) {
+            return heroActionsLayout.requestFocus();
         } else if (listFragment != null) {
             listFragment.requestFocusOnFirstItem();
             return true;

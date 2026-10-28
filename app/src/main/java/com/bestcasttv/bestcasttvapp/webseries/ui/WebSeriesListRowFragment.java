@@ -3,6 +3,10 @@ package com.bestcasttv.bestcasttvapp.webseries.ui;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.FocusFinder;
+import androidx.leanback.widget.BrowseFrameLayout;
+import com.bestcasttv.bestcasttvapp.R;
+import com.bestcasttv.bestcasttvapp.main_page.MainPageActivity;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -59,6 +63,36 @@ public class WebSeriesListRowFragment extends RowsSupportFragment {
 
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
         setOnItemViewClickedListener(new ItemViewClickListener());
+
+        if (view instanceof BrowseFrameLayout) {
+            BrowseFrameLayout browseFrameLayout = (BrowseFrameLayout) view;
+            browseFrameLayout.setOnFocusSearchListener((focused, direction) -> {
+                if (direction == View.FOCUS_LEFT) {
+                    View next = FocusFinder.getInstance().findNextFocus(browseFrameLayout, focused, View.FOCUS_LEFT);
+                    if (next != null && next != focused) {
+                        return next;
+                    }
+                    if (getActivity() instanceof MainPageActivity) {
+                        View target = ((MainPageActivity) getActivity()).getSelectedMenuView();
+                        if (target != null && target.isShown()) {
+                            return target;
+                        }
+                    }
+                } else if (direction == View.FOCUS_UP) {
+                    View next = FocusFinder.getInstance().findNextFocus(browseFrameLayout, focused, View.FOCUS_UP);
+                    if (next != null && next != focused) {
+                        return next;
+                    }
+                    if (getActivity() != null) {
+                        View heroPlay = getActivity().findViewById(R.id.btn_hero_play);
+                        if (heroPlay != null && heroPlay.getVisibility() == View.VISIBLE) {
+                            return heroPlay;
+                        }
+                    }
+                }
+                return null;
+            });
+        }
     }
 
     public boolean hasData() {
